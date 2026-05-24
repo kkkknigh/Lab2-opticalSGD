@@ -1,0 +1,38 @@
+experiment:
+  name: self_check
+  output_dir: analysis/output
+
+renderer:
+  backend: torch
+  device: auto
+  camera_width: 512
+  scene_height: 64
+  projector_width: 256
+  noise_std: 0.005
+  depth_shading_strength: 0.3
+  ambient: 0.12
+
+scene:
+  depth_profile: slanted_wave
+  material: diffuse
+  camera_width: 512
+  scene_height: 64
+
+patterns:
+  count: 4
+  initial_method: constant
+  seed: 7
+  lowpass_fraction: 0.35
+  apply_frequency_constraint: false
+
+decoder:
+  type: zncc
+  neighborhood: 1
+
+optimization:
+  gradient_method: finite_difference
+  iterations: 0
+  learning_rate: 0.25
+  epsilon: 0.03
+  temperature: 25.0
+  joint_optimize_decoder: false

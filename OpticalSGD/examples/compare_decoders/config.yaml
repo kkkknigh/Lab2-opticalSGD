@@ -1,0 +1,51 @@
+experiment:
+  name: compare_decoders
+  output_dir: analysis/output
+
+renderer:
+  backend: torch
+  device: auto
+  camera_width: 512
+  scene_height: 64
+  projector_width: 256
+  noise_std: 0.012
+  depth_shading_strength: 0.3
+  ambient: 0.12
+
+scene:
+  depth_profile: slanted_wave
+  material: diffuse
+  camera_width: 512
+  scene_height: 64
+
+patterns:
+  count: 8
+  initial_method: random
+  seed: 7
+  lowpass_fraction: 0.35
+  apply_frequency_constraint: true
+
+decoder:
+  type: zncc
+  neighborhood: 1
+
+optimization:
+  gradient_method: autograd
+  iterations: 60
+  learning_rate: 0.25
+  temperature: 25.0
+  joint_optimize_decoder: true
+  decoder_learning_rate: 0.008
+
+decoder_comparison:
+  variants:
+    - name: zncc
+      type: zncc
+      neighborhood: 1
+    - name: zncc_neighborhood
+      type: zncc
+      neighborhood: 3
+    - name: zncc_nn
+      type: zncc_nn
+      neighborhood: 3
+  materials: [diffuse, marble, frosted_glass]

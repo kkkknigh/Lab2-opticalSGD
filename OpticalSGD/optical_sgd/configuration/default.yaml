@@ -1,0 +1,42 @@
+experiment:
+  name: default
+  output_dir: output/default
+
+renderer:
+  backend: torch
+  device: auto
+  camera_width: 512
+  scene_height: 64
+  projector_width: 256
+  noise_std: 0.012
+  depth_shading_strength: 0.3
+  ambient: 0.12
+  projector_fov: 38.0
+  camera_fov: 42.0
+  projector_baseline: 0.08
+
+scene:
+  depth_profile: slanted_wave
+  material: diffuse
+  camera_width: 512
+  scene_height: 64
+
+patterns:
+  count: 8
+  initial_method: random
+  seed: 7
+  lowpass_fraction: 0.35
+  apply_frequency_constraint: true
+
+decoder:
+  type: zncc
+  neighborhood: 1
+
+optimization:
+  gradient_method: finite_difference
+  iterations: 120
+  learning_rate: 0.25
+  epsilon: 0.03
+  temperature: 25.0
+  joint_optimize_decoder: false
+  decoder_learning_rate: 0.01

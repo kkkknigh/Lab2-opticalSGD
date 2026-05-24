@@ -1,0 +1,43 @@
+experiment:
+  name: compare_gradients
+  output_dir: analysis/output
+
+renderer:
+  backend: torch
+  device: auto
+  camera_width: 128
+  scene_height: 32
+  projector_width: 64
+  noise_std: 0.005
+  depth_shading_strength: 0.3
+  ambient: 0.12
+
+scene:
+  depth_profile: slanted_wave
+  material: diffuse
+  camera_width: 128
+  scene_height: 32
+
+patterns:
+  count: 4
+  initial_method: random
+  seed: 7
+  lowpass_fraction: 0.35
+  apply_frequency_constraint: true
+
+decoder:
+  type: zncc
+  neighborhood: 1
+
+optimization:
+  gradient_method: autograd
+  iterations: 20
+  learning_rate: 0.25
+  epsilon: 0.03
+  temperature: 25.0
+  joint_optimize_decoder: false
+
+gradient_comparison:
+  sensitivity_iterations: 5
+  epsilons: [0.001, 0.005, 0.01, 0.03, 0.06, 0.12]
+  noise_levels: [0.0, 0.005, 0.012, 0.025, 0.05]

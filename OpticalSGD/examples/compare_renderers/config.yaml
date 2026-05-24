@@ -1,0 +1,51 @@
+experiment:
+  name: compare_renderers
+  output_dir: analysis/output
+
+renderer:
+  backend: torch
+  device: auto
+  camera_width: 256
+  scene_height: 32
+  projector_width: 128
+  noise_std: 0.012
+  depth_shading_strength: 0.3
+  ambient: 0.12
+
+scene:
+  depth_profile: slanted_wave
+  camera_width: 256
+  scene_height: 32
+
+patterns:
+  count: 4
+  initial_method: random
+  seed: 7
+  lowpass_fraction: 0.35
+  apply_frequency_constraint: true
+
+decoder:
+  type: zncc
+  neighborhood: 1
+
+optimization:
+  gradient_method: finite_difference
+  iterations: 30
+  learning_rate: 0.25
+  epsilon: 0.03
+  temperature: 25.0
+  joint_optimize_decoder: false
+
+renderer_comparison:
+  backends: [torch, mitsuba]
+  gradient_method: finite_difference
+  system_paths:
+    - name: torch_autograd
+      backend: torch
+      gradient_method: autograd
+    - name: mitsuba_finite_difference
+      backend: mitsuba
+      gradient_method: finite_difference
+  materials: [diffuse]
+  noise_levels: [0.0, 0.012]
+  depth_profiles: [flat, slanted_wave]
