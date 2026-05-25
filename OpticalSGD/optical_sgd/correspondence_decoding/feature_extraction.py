@@ -60,5 +60,5 @@ def camera_neighborhood_features(images: np.ndarray, radius: int) -> np.ndarray:
     features = []
     for col in range(width):
         patch = padded[:, :, col : col + 2 * radius + 1]
-        features.append(np.moveaxis(patch, 0, -1).reshape(height, count * (2 * radius + 1)))
+        features.append(patch.transpose(1, 0, 2).reshape(height, count * (2 * radius + 1)))
     return np.stack(features, axis=1).astype(np.float32)
