@@ -36,3 +36,9 @@ optimization:
   epsilon: 0.03
   temperature: 25.0
   joint_optimize_decoder: false
+
+self_check:
+  materials: [diffuse, marble]
+  depth_profiles: [flat, bump, slanted_wave]
+  pattern_methods: [constant, stripes, random]
+  captured_indices: [0]

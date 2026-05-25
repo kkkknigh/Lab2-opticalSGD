@@ -1,0 +1,8 @@
+{
+  "material": "diffuse",
+  "depth_profile": "flat",
+  "material_description": "Lambertian baseline with mild sinusoidal albedo.",
+  "constant_mean_intensity": 0.3735226094722748,
+  "stripes_mean_intensity": 0.3787424564361572,
+  "random_mean_intensity": 0.3724549412727356
+}

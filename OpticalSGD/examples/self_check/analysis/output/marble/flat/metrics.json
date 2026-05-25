@@ -1,0 +1,8 @@
+{
+  "material": "marble",
+  "depth_profile": "flat",
+  "material_description": "Veined stone with contrast texture, mild specular response, and local scattering.",
+  "constant_mean_intensity": 0.3234313130378723,
+  "stripes_mean_intensity": 0.3286060392856598,
+  "random_mean_intensity": 0.32263320684432983
+}

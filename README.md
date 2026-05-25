@@ -153,9 +153,9 @@ nn decoder 参数更新：
 
 这样可以避免优化 pattern 变成投影仪和相机难以稳定显示/采集的高频噪声。
 
-## 实验入口
-
-每个实验都有自己的配置文件，路径 `examples/<experiment>/config.yaml`。建议从 `OpticalSGD/` 目录运行。
+## 实验设置和入口
+建议从 `OpticalSGD/` 目录运行。
+每个实验都有自己的配置文件，路径 `examples/<experiment>/config.yaml`。
 
 统一 PowerShell 脚本会使用 conda 环境 `3dv`，并把完整日志保存到 `analysis/logs/`：
 
@@ -171,21 +171,42 @@ conda activate 3dv
 python examples/compare_decoders/run.py
 ```
 
-### 渲染器自检
+### `self-check` 渲染器自检
 
-关注点：检查常量图案、条纹图案、随机图案的渲染结果，保存深度、albedo、specular、scattering 和 correspondence 真值图，证明投影方向和几何对应关系合理。
+当前自检覆盖 `diffuse`、`marble` 两种材质，以及 `flat`、`bump`、`slanted_wave` 三种深度。每个材质/深度组合都会分别渲染 `constant`、`stripes`、`random` 三种 pattern，并保存第 0 张 captured image 作为代表图。
 
 配置：
-
 ```text
 examples/self_check/config.yaml
 ```
 
 运行：
-
 ```bash
 python examples/self_check/run.py
 ```
+
+输出目录：
+
+```text
+examples/self_check/analysis/output/<material>/<depth_profile>/
+```
+
+每个子目录包含以下文件：
+
+| 文件 | 简介 | 作用 |
+|---|---|---|
+| `constant_pattern.png` | 常量投影图案，所有投影列亮度相同。 | 没有条纹或随机纹理输入时，渲染结果应该只受材质、深度 shading、环境光和噪声影响。 |
+| `constant_captured_0.png` | 相机在常量图案下捕获到的代表图。 | 若几何和材质链路正常，应看到平滑的深度/材质亮度变化，不应出现由输入图案造成的条纹。 |
+| `stripes_pattern.png` | 正弦条纹投影图案。 | 用来检查投影仪横向列方向是否正确。 |
+| `stripes_captured_0.png` | 相机在条纹图案下捕获到的代表图。 | 条纹应被 correspondence 映射到相机视角；条纹弯曲或位移应和深度图变化一致。 |
+| `random_pattern.png` | 随机投影图案。 | 检查非规则图案是否能被正常采样和渲染。 |
+| `random_captured_0.png` | 相机在随机图案下捕获到的代表图。 | 结果不应为空图或整体饱和，说明 pattern 到 captured image 的采样链路有效。 |
+| `depth.png` | 当前合成场景的深度真值。 | 验证 `flat`、`bump`、`slanted_wave` 三种几何是否按配置生成。 |
+| `ground_truth_correspondence.png` | 相机像素到投影仪列坐标的真值映射。 | 直接证明相机方向、投影方向和几何对应关系是否连续、平滑、方向正确。 |
+| `albedo.png` | 表面漫反射贴图。 | 检查材质纹理是否正确。 |
+| `specular.png` | 镜面反射强度图。 | 检查材质镜面项。 |
+| `scattering.png` | 局部散射/串扰强度图。 | 检查材质散射项。 |
+| `metrics.json` | 当前场景的材质、深度和三种图案平均亮度。 | 用于确认每组自检都成功输出，并提供亮度 sanity check。 |
 
 ### Pattern 训练
 
@@ -205,7 +226,7 @@ python examples/train_patterns/run.py
 
 ### 梯度方式对比
 
-关注点：固定场景和 decoder，对比 `finite_difference` 与 `autograd` 的收敛结果、梯度方向相似度、扰动步长敏感性和噪声敏感性。
+关注点：固定场景、初始图案和 decoder，对比 `finite_difference` 与 `autograd` 的收敛速度、最终解码精度、运行时间和梯度稳定性；同时分别测试扰动步长、噪声、pattern 采样数和随机种子的敏感性。
 
 配置：
 
@@ -283,34 +304,3 @@ examples/compare_renderers/config.yaml
 python examples/compare_renderers/run.py
 ```
 
-## 输出内容
-
-训练实验会保存：
-
-- `metrics.json`
-- `initial_patterns.png`
-- `optimized_patterns.png`
-- `initial_pattern_spectrum.png`
-- `optimized_pattern_spectrum.png`
-- `final_captured_0.png`
-- `final_error_map.png`
-- `loss_curve.png`
-- `mae_curve.png`
-- `decoder_gradient_norm_curve.png`
-- `checkpoint.npz`
-
-`metrics.json` 包含 loss、MAE、`accuracy_error_le_1/2/5`、运行时间、梯度范数、带外频谱能量占比等字段。
-
-对比实验还会输出 CSV：
-
-- `gradient_comparison.csv`
-- `gradient_stability.csv`
-- `finite_difference_epsilon_sensitivity.csv`
-- `noise_sensitivity.csv`
-- `decoder_comparison.csv`
-- `material_comparison.csv`
-- `frequency_constraint_comparison.csv`
-- `renderer_comparison.csv`
-- `system_comparison.csv`
-
-所有实验脚本都会在控制台输出带时间戳的进度日志；统一 PowerShell 脚本会额外把每个实验日志写入 `analysis/logs/`。

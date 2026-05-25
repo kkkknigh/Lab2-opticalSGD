@@ -55,15 +55,33 @@ def run_pattern_training(config: dict, output_dir: Path, configure_logging: bool
     with StepTimer("final evaluation"):
         final_eval = optimizer.evaluate(optimized_patterns)
     final_result = final_eval["render_result"]
+    losses = [float(value) for value in state.losses]
+    maes = [float(value) for value in state.maes]
+    initial_loss = float(initial_eval["loss"])
+    initial_mae = float(initial_eval["mae"])
+    final_loss = float(final_eval["loss"])
+    final_mae = float(final_eval["mae"])
+    best_loss = min(losses) if losses else final_loss
+    best_mae = min(maes) if maes else final_mae
+    target_loss = final_loss + 0.1 * max(initial_loss - final_loss, 0.0)
+    target_mae = final_mae + 0.1 * max(initial_mae - final_mae, 0.0)
 
     err = error_map(final_eval["predicted"], final_result.ground_truth_correspondence)
     metrics = {
-        "initial_loss": float(initial_eval["loss"]),
-        "initial_mae": float(initial_eval["mae"]),
-        "final_loss": float(final_eval["loss"]),
-        "final_mae": float(final_eval["mae"]),
-        "mae_improvement": float(initial_eval["mae"] - final_eval["mae"]),
-        "loss_improvement": float(initial_eval["loss"] - final_eval["loss"]),
+        "initial_loss": initial_loss,
+        "initial_mae": initial_mae,
+        "final_loss": final_loss,
+        "final_mae": final_mae,
+        "best_loss": best_loss,
+        "best_mae": best_mae,
+        "mae_improvement": float(initial_mae - final_mae),
+        "loss_improvement": float(initial_loss - final_loss),
+        "best_mae_improvement": float(initial_mae - best_mae),
+        "best_loss_improvement": float(initial_loss - best_loss),
+        "loss_reaches_final_10pct_iteration": _first_iteration_at_or_below(losses, target_loss),
+        "mae_reaches_final_10pct_iteration": _first_iteration_at_or_below(maes, target_mae),
+        "loss_improvement_per_second": float((initial_loss - final_loss) / max(perf_counter() - total_start, 1e-12)),
+        "mae_improvement_per_second": float((initial_mae - final_mae) / max(perf_counter() - total_start, 1e-12)),
         "runtime_seconds": float(perf_counter() - total_start),
         "iterations": int(config["optimization"]["iterations"]),
         "gradient_method": str(config["optimization"]["gradient_method"]),
@@ -123,6 +141,15 @@ def run_pattern_training(config: dict, output_dir: Path, configure_logging: bool
         f"runtime={metrics['runtime_seconds']:.2f}s"
     )
     return metrics
+
+
+def _first_iteration_at_or_below(values: list[float], threshold: float) -> int:
+    """Return 1-based first iteration reaching a threshold, or 0 when never reached."""
+
+    for index, value in enumerate(values, start=1):
+        if float(value) <= float(threshold):
+            return index
+    return 0
 
 
 if __name__ == "__main__":

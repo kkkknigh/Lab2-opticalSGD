@@ -1,7 +1,54 @@
 {
-  "constant_mean_intensity": 0.4032835066318512,
-  "stripes_mean_intensity": 0.40752989053726196,
-  "random_mean_intensity": 0.40176594257354736,
-  "material": "diffuse",
-  "material_description": "Lambertian baseline with mild sinusoidal albedo."
+  "diffuse": {
+    "flat": {
+      "material": "diffuse",
+      "depth_profile": "flat",
+      "material_description": "Lambertian baseline with mild sinusoidal albedo.",
+      "constant_mean_intensity": 0.3735226094722748,
+      "stripes_mean_intensity": 0.3787424564361572,
+      "random_mean_intensity": 0.3724549412727356
+    },
+    "bump": {
+      "material": "diffuse",
+      "depth_profile": "bump",
+      "material_description": "Lambertian baseline with mild sinusoidal albedo.",
+      "constant_mean_intensity": 0.40397733449935913,
+      "stripes_mean_intensity": 0.40886518359184265,
+      "random_mean_intensity": 0.40279120206832886
+    },
+    "slanted_wave": {
+      "material": "diffuse",
+      "depth_profile": "slanted_wave",
+      "material_description": "Lambertian baseline with mild sinusoidal albedo.",
+      "constant_mean_intensity": 0.4032835066318512,
+      "stripes_mean_intensity": 0.40752989053726196,
+      "random_mean_intensity": 0.40176594257354736
+    }
+  },
+  "marble": {
+    "flat": {
+      "material": "marble",
+      "depth_profile": "flat",
+      "material_description": "Veined stone with contrast texture, mild specular response, and local scattering.",
+      "constant_mean_intensity": 0.3234313130378723,
+      "stripes_mean_intensity": 0.3286060392856598,
+      "random_mean_intensity": 0.32263320684432983
+    },
+    "bump": {
+      "material": "marble",
+      "depth_profile": "bump",
+      "material_description": "Veined stone with contrast texture, mild specular response, and local scattering.",
+      "constant_mean_intensity": 0.3506414592266083,
+      "stripes_mean_intensity": 0.3556250333786011,
+      "random_mean_intensity": 0.34975358843803406
+    },
+    "slanted_wave": {
+      "material": "marble",
+      "depth_profile": "slanted_wave",
+      "material_description": "Veined stone with contrast texture, mild specular response, and local scattering.",
+      "constant_mean_intensity": 0.3476772904396057,
+      "stripes_mean_intensity": 0.35192281007766724,
+      "random_mean_intensity": 0.3465180993080139
+    }
+  }
 }

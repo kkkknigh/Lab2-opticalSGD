@@ -43,8 +43,18 @@ def test_save_rows_csv_writes_header_and_rows(tmp_path):
     assert path.read_text(encoding="utf-8").splitlines() == ["a,b", "1,2", "3,4"]
 
 
-def test_save_rows_csv_with_empty_rows_creates_directory_only(tmp_path):
+def test_save_rows_csv_keeps_columns_from_later_rows(tmp_path):
+    path = tmp_path / "rows.csv"
+
+    save_rows_csv(path, [{"a": 1}, {"a": 2, "b": 3}])
+
+    assert path.read_text(encoding="utf-8").splitlines() == ["a,b", "1,", "2,3"]
+
+
+def test_save_rows_csv_with_empty_rows_removes_stale_file(tmp_path):
     path = tmp_path / "tables" / "empty.csv"
+    path.parent.mkdir(parents=True)
+    path.write_text("stale,data\n1,2\n", encoding="utf-8")
 
     save_rows_csv(path, [])
 

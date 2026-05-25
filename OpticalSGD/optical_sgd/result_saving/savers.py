@@ -29,7 +29,8 @@ def save_image(path: str | Path, image: np.ndarray, cmap: str = "viridis") -> No
 
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    plt.imsave(path, np.asarray(image), cmap=cmap)
+    kwargs = {"vmin": 0.0, "vmax": 1.0} if cmap == "gray" else {}
+    plt.imsave(path, np.asarray(image), cmap=cmap, **kwargs)
 
 
 def save_line_plot(path: str | Path, values: list[float], ylabel: str) -> None:
@@ -62,9 +63,18 @@ def save_rows_csv(path: str | Path, rows: list[dict]) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     if not rows:
+        if path.exists():
+            path.unlink()
         return
     with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        fieldnames = []
+        seen = set()
+        for row in rows:
+            for key in row.keys():
+                if key not in seen:
+                    seen.add(key)
+                    fieldnames.append(key)
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
 

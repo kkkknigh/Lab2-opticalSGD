@@ -1,0 +1,62 @@
+[22:06:27] self check output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\self_check\analysis\output
+[22:06:27] START build scene/renderer material=diffuse depth=flat
+[22:06:27] DONE build scene/renderer material=diffuse depth=flat (0.00s)
+[22:06:27] START render material=diffuse depth=flat method=constant
+[22:06:30] DONE render material=diffuse depth=flat method=constant (2.24s)
+[22:06:30] START render material=diffuse depth=flat method=stripes
+[22:06:30] DONE render material=diffuse depth=flat method=stripes (0.06s)
+[22:06:30] START render material=diffuse depth=flat method=random
+[22:06:30] DONE render material=diffuse depth=flat method=random (0.03s)
+[22:06:30] START save scene maps material=diffuse depth=flat
+[22:06:30] DONE save scene maps material=diffuse depth=flat (0.01s)
+[22:06:30] START build scene/renderer material=diffuse depth=bump
+[22:06:30] DONE build scene/renderer material=diffuse depth=bump (0.00s)
+[22:06:30] START render material=diffuse depth=bump method=constant
+[22:06:30] DONE render material=diffuse depth=bump method=constant (0.04s)
+[22:06:30] START render material=diffuse depth=bump method=stripes
+[22:06:30] DONE render material=diffuse depth=bump method=stripes (0.03s)
+[22:06:30] START render material=diffuse depth=bump method=random
+[22:06:30] DONE render material=diffuse depth=bump method=random (0.02s)
+[22:06:30] START save scene maps material=diffuse depth=bump
+[22:06:30] DONE save scene maps material=diffuse depth=bump (0.01s)
+[22:06:30] START build scene/renderer material=diffuse depth=slanted_wave
+[22:06:30] DONE build scene/renderer material=diffuse depth=slanted_wave (0.00s)
+[22:06:30] START render material=diffuse depth=slanted_wave method=constant
+[22:06:30] DONE render material=diffuse depth=slanted_wave method=constant (0.02s)
+[22:06:30] START render material=diffuse depth=slanted_wave method=stripes
+[22:06:30] DONE render material=diffuse depth=slanted_wave method=stripes (0.03s)
+[22:06:30] START render material=diffuse depth=slanted_wave method=random
+[22:06:30] DONE render material=diffuse depth=slanted_wave method=random (0.05s)
+[22:06:30] START save scene maps material=diffuse depth=slanted_wave
+[22:06:30] DONE save scene maps material=diffuse depth=slanted_wave (0.01s)
+[22:06:30] START build scene/renderer material=marble depth=flat
+[22:06:30] DONE build scene/renderer material=marble depth=flat (0.00s)
+[22:06:30] START render material=marble depth=flat method=constant
+[22:06:30] DONE render material=marble depth=flat method=constant (0.03s)
+[22:06:30] START render material=marble depth=flat method=stripes
+[22:06:30] DONE render material=marble depth=flat method=stripes (0.03s)
+[22:06:30] START render material=marble depth=flat method=random
+[22:06:30] DONE render material=marble depth=flat method=random (0.03s)
+[22:06:30] START save scene maps material=marble depth=flat
+[22:06:30] DONE save scene maps material=marble depth=flat (0.03s)
+[22:06:30] START build scene/renderer material=marble depth=bump
+[22:06:30] DONE build scene/renderer material=marble depth=bump (0.00s)
+[22:06:30] START render material=marble depth=bump method=constant
+[22:06:30] DONE render material=marble depth=bump method=constant (0.02s)
+[22:06:30] START render material=marble depth=bump method=stripes
+[22:06:30] DONE render material=marble depth=bump method=stripes (0.03s)
+[22:06:30] START render material=marble depth=bump method=random
+[22:06:30] DONE render material=marble depth=bump method=random (0.04s)
+[22:06:30] START save scene maps material=marble depth=bump
+[22:06:30] DONE save scene maps material=marble depth=bump (0.02s)
+[22:06:30] START build scene/renderer material=marble depth=slanted_wave
+[22:06:30] DONE build scene/renderer material=marble depth=slanted_wave (0.00s)
+[22:06:30] START render material=marble depth=slanted_wave method=constant
+[22:06:30] DONE render material=marble depth=slanted_wave method=constant (0.02s)
+[22:06:30] START render material=marble depth=slanted_wave method=stripes
+[22:06:30] DONE render material=marble depth=slanted_wave method=stripes (0.03s)
+[22:06:30] START render material=marble depth=slanted_wave method=random
+[22:06:30] DONE render material=marble depth=slanted_wave method=random (0.04s)
+[22:06:30] START save scene maps material=marble depth=slanted_wave
+[22:06:30] DONE save scene maps material=marble depth=slanted_wave (0.03s)
+[22:06:30] summary scenes=6

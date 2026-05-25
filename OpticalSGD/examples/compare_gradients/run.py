@@ -30,8 +30,13 @@ def run_gradient_comparison(config: dict, output_dir: Path) -> dict:
     output_dir = prepare_output_directory(output_dir)
     configure_log_file(output_dir / "run.log")
     log_step(f"gradient comparison output={output_dir}")
+    comparison_cfg = config.get("gradient_comparison", {})
+    stability_seeds = comparison_cfg.get("stability_seeds", [int(config["patterns"]["seed"])])
     with StepTimer("gradient stability estimate"):
-        stability_rows = [_estimate_gradient_stability(config)]
+        stability_rows = [
+            _estimate_gradient_stability(_with_seed(config, seed), seed=seed)
+            for seed in stability_seeds
+        ]
     save_rows_csv(output_dir / "gradient_stability.csv", stability_rows)
 
     rows = []
@@ -105,17 +110,75 @@ def run_gradient_comparison(config: dict, output_dir: Path) -> dict:
             )
     save_rows_csv(output_dir / "noise_sensitivity.csv", noise_rows)
 
+    pattern_count_rows = []
+    pattern_counts = comparison_cfg.get("pattern_counts", [])
+    for method in ["finite_difference", "autograd"]:
+        for pattern_count in pattern_counts:
+            sample_cfg = deepcopy(config)
+            sample_cfg["optimization"]["gradient_method"] = method
+            sample_cfg["patterns"]["count"] = int(pattern_count)
+            sample_cfg["optimization"]["iterations"] = int(
+                comparison_cfg.get("sensitivity_iterations", config["optimization"]["iterations"])
+            )
+            with StepTimer(f"pattern-count sensitivity method={method} count={int(pattern_count)}"):
+                start = perf_counter()
+                metrics = run_pattern_training(
+                    sample_cfg,
+                    output_dir / f"patterns_{method}_{int(pattern_count)}",
+                    configure_logging=False,
+                )
+            pattern_count_rows.append(
+                {
+                    "gradient_method": method,
+                    "pattern_count": int(pattern_count),
+                    "runtime_seconds": perf_counter() - start,
+                    **metrics,
+                }
+            )
+    save_rows_csv(output_dir / "pattern_count_sensitivity.csv", pattern_count_rows)
+
+    seed_rows = []
+    seeds = comparison_cfg.get("seeds", [])
+    for seed in seeds:
+        for method in ["finite_difference", "autograd"]:
+            seed_cfg = _with_seed(config, seed)
+            seed_cfg["optimization"]["gradient_method"] = method
+            seed_cfg["optimization"]["iterations"] = int(
+                comparison_cfg.get("repeat_iterations", config["optimization"]["iterations"])
+            )
+            with StepTimer(f"seed repeat method={method} seed={int(seed)}"):
+                start = perf_counter()
+                metrics = run_pattern_training(
+                    seed_cfg,
+                    output_dir / f"seed_{int(seed)}_{method}",
+                    configure_logging=False,
+                )
+            seed_rows.append(
+                {
+                    "seed": int(seed),
+                    "gradient_method": method,
+                    "runtime_seconds": perf_counter() - start,
+                    **metrics,
+                }
+            )
+    save_rows_csv(output_dir / "seed_repeats.csv", seed_rows)
+    seed_summary_rows = _summarize_by_method(seed_rows)
+    save_rows_csv(output_dir / "seed_repeat_summary.csv", seed_summary_rows)
+
     full_summary = {
         "gradient_stability": stability_rows,
         "main_comparison": summary,
         "finite_difference_epsilon_sensitivity": epsilon_rows,
         "noise_sensitivity": noise_rows,
+        "pattern_count_sensitivity": pattern_count_rows,
+        "seed_repeats": seed_rows,
+        "seed_repeat_summary": seed_summary_rows,
     }
     save_metrics_json(output_dir / "metrics.json", full_summary)
     return full_summary
 
 
-def _estimate_gradient_stability(config: dict) -> dict:
+def _estimate_gradient_stability(config: dict, seed: int | None = None) -> dict:
     scene = build_scene(config)
     patterns = build_initial_patterns(config)
     patterns = apply_frequency_constraint(patterns, float(config["patterns"]["lowpass_fraction"]))
@@ -152,7 +215,9 @@ def _estimate_gradient_stability(config: dict) -> dict:
     autograd_norm = float(np.linalg.norm(autograd_gradient))
     difference_norm = float(np.linalg.norm(fd_gradient - autograd_gradient))
     return {
+        "seed": int(config["patterns"]["seed"] if seed is None else seed),
         "epsilon": float(config["optimization"]["epsilon"]),
+        "pattern_count": int(config["patterns"]["count"]),
         "finite_difference_gradient_norm": fd_norm,
         "autograd_gradient_norm": autograd_norm,
         "gradient_norm_ratio_fd_over_autograd": fd_norm / max(autograd_norm, 1e-12),
@@ -162,6 +227,37 @@ def _estimate_gradient_stability(config: dict) -> dict:
         "finite_difference_runtime_seconds": fd_seconds,
         "autograd_runtime_seconds": autograd_seconds,
     }
+
+
+def _with_seed(config: dict, seed: int) -> dict:
+    seeded = deepcopy(config)
+    seeded["patterns"]["seed"] = int(seed)
+    return seeded
+
+
+def _summarize_by_method(rows: list[dict]) -> list[dict]:
+    if not rows:
+        return []
+    metric_names = [
+        "final_mae",
+        "accuracy_error_le_1",
+        "runtime_seconds",
+        "mean_gradient_norm",
+        "std_gradient_norm",
+        "mae_reaches_final_10pct_iteration",
+    ]
+    methods = sorted({str(row["gradient_method"]) for row in rows})
+    summaries = []
+    for method in methods:
+        method_rows = [row for row in rows if str(row["gradient_method"]) == method]
+        summary = {"gradient_method": method, "runs": len(method_rows)}
+        for metric in metric_names:
+            values = [float(row[metric]) for row in method_rows if metric in row]
+            if values:
+                summary[f"{metric}_mean"] = float(np.mean(values))
+                summary[f"{metric}_std"] = float(np.std(values))
+        summaries.append(summary)
+    return summaries
 
 
 if __name__ == "__main__":

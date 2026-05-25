@@ -1,0 +1,12 @@
+[21:56:19] experiment=train_patterns backend=torch gradient=autograd decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\train_patterns\analysis\output
+[21:56:19] START build scene/renderer/decoder
+[21:56:19] DONE build scene/renderer/decoder (0.01s)
+[21:56:19] START initial evaluation
+[21:56:21] DONE initial evaluation (2.22s)
+[21:56:21] START training iterations=120
+[21:56:37] DONE training iterations=120 (15.98s)
+[21:56:37] START final evaluation
+[21:56:37] DONE final evaluation (0.10s)
+[21:56:37] START save outputs
+[21:56:37] DONE save outputs (0.38s)
+[21:56:37] summary final_mae=0.2551 acc@1=1.0000 runtime=18.31s

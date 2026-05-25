@@ -39,5 +39,9 @@ optimization:
 
 gradient_comparison:
   sensitivity_iterations: 5
+  repeat_iterations: 8
+  seeds: [7, 11, 19]
+  stability_seeds: [7, 11, 19]
   epsilons: [0.001, 0.005, 0.01, 0.03, 0.06, 0.12]
   noise_levels: [0.0, 0.005, 0.012, 0.025, 0.05]
+  pattern_counts: [2, 4, 8]

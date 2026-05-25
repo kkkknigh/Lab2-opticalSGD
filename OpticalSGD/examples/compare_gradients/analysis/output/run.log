@@ -1,0 +1,423 @@
+[20:50:05] gradient comparison output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output
+[20:50:05] START gradient stability estimate
+[20:50:14] DONE gradient stability estimate (8.84s)
+[20:50:14] START main gradient_method=finite_difference
+[20:50:14] experiment=compare_gradients backend=torch gradient=finite_difference decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\finite_difference
+[20:50:14] START build scene/renderer/decoder
+[20:50:14] DONE build scene/renderer/decoder (0.00s)
+[20:50:14] START initial evaluation
+[20:50:14] DONE initial evaluation (0.01s)
+[20:50:14] START training iterations=20
+[20:51:07] DONE training iterations=20 (52.89s)
+[20:51:07] START final evaluation
+[20:51:07] DONE final evaluation (0.01s)
+[20:51:07] START save outputs
+[20:51:07] DONE save outputs (0.37s)
+[20:51:07] summary final_mae=0.3346 acc@1=0.9820 runtime=52.90s
+[20:51:07] DONE main gradient_method=finite_difference (53.27s)
+[20:51:07] START main gradient_method=autograd
+[20:51:07] experiment=compare_gradients backend=torch gradient=autograd decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\autograd
+[20:51:07] START build scene/renderer/decoder
+[20:51:07] DONE build scene/renderer/decoder (0.00s)
+[20:51:07] START initial evaluation
+[20:51:07] DONE initial evaluation (0.01s)
+[20:51:07] START training iterations=20
+[20:51:08] DONE training iterations=20 (0.33s)
+[20:51:08] START final evaluation
+[20:51:08] DONE final evaluation (0.01s)
+[20:51:08] START save outputs
+[20:51:08] DONE save outputs (0.34s)
+[20:51:08] summary final_mae=0.5459 acc@1=0.9496 runtime=0.35s
+[20:51:08] DONE main gradient_method=autograd (0.69s)
+[20:51:08] START epsilon sensitivity epsilon=0.0010
+[20:51:08] experiment=compare_gradients backend=torch gradient=finite_difference decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\epsilon_0.0010
+[20:51:08] START build scene/renderer/decoder
+[20:51:08] DONE build scene/renderer/decoder (0.00s)
+[20:51:08] START initial evaluation
+[20:51:08] DONE initial evaluation (0.01s)
+[20:51:08] START training iterations=5
+[20:51:21] DONE training iterations=5 (13.29s)
+[20:51:21] START final evaluation
+[20:51:21] DONE final evaluation (0.01s)
+[20:51:21] START save outputs
+[20:51:22] DONE save outputs (0.30s)
+[20:51:22] summary final_mae=0.6880 acc@1=0.8760 runtime=13.30s
+[20:51:22] DONE epsilon sensitivity epsilon=0.0010 (13.60s)
+[20:51:22] START epsilon sensitivity epsilon=0.0050
+[20:51:22] experiment=compare_gradients backend=torch gradient=finite_difference decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\epsilon_0.0050
+[20:51:22] START build scene/renderer/decoder
+[20:51:22] DONE build scene/renderer/decoder (0.00s)
+[20:51:22] START initial evaluation
+[20:51:22] DONE initial evaluation (0.01s)
+[20:51:22] START training iterations=5
+[20:51:35] DONE training iterations=5 (13.26s)
+[20:51:35] START final evaluation
+[20:51:35] DONE final evaluation (0.01s)
+[20:51:35] START save outputs
+[20:51:35] DONE save outputs (0.29s)
+[20:51:35] summary final_mae=0.9602 acc@1=0.8537 runtime=13.27s
+[20:51:35] DONE epsilon sensitivity epsilon=0.0050 (13.56s)
+[20:51:35] START epsilon sensitivity epsilon=0.0100
+[20:51:35] experiment=compare_gradients backend=torch gradient=finite_difference decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\epsilon_0.0100
+[20:51:35] START build scene/renderer/decoder
+[20:51:35] DONE build scene/renderer/decoder (0.00s)
+[20:51:35] START initial evaluation
+[20:51:35] DONE initial evaluation (0.01s)
+[20:51:35] START training iterations=5
+[20:51:47] DONE training iterations=5 (12.21s)
+[20:51:47] START final evaluation
+[20:51:47] DONE final evaluation (0.01s)
+[20:51:47] START save outputs
+[20:51:48] DONE save outputs (0.31s)
+[20:51:48] summary final_mae=0.6998 acc@1=0.8731 runtime=12.23s
+[20:51:48] DONE epsilon sensitivity epsilon=0.0100 (12.54s)
+[20:51:48] START epsilon sensitivity epsilon=0.0300
+[20:51:48] experiment=compare_gradients backend=torch gradient=finite_difference decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\epsilon_0.0300
+[20:51:48] START build scene/renderer/decoder
+[20:51:48] DONE build scene/renderer/decoder (0.00s)
+[20:51:48] START initial evaluation
+[20:51:48] DONE initial evaluation (0.01s)
+[20:51:48] START training iterations=5
+[20:52:01] DONE training iterations=5 (13.33s)
+[20:52:01] START final evaluation
+[20:52:01] DONE final evaluation (0.01s)
+[20:52:01] START save outputs
+[20:52:01] DONE save outputs (0.30s)
+[20:52:01] summary final_mae=0.7367 acc@1=0.8734 runtime=13.35s
+[20:52:01] DONE epsilon sensitivity epsilon=0.0300 (13.66s)
+[20:52:01] START epsilon sensitivity epsilon=0.0600
+[20:52:01] experiment=compare_gradients backend=torch gradient=finite_difference decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\epsilon_0.0600
+[20:52:01] START build scene/renderer/decoder
+[20:52:01] DONE build scene/renderer/decoder (0.00s)
+[20:52:01] START initial evaluation
+[20:52:01] DONE initial evaluation (0.01s)
+[20:52:01] START training iterations=5
+[20:52:15] DONE training iterations=5 (13.46s)
+[20:52:15] START final evaluation
+[20:52:15] DONE final evaluation (0.01s)
+[20:52:15] START save outputs
+[20:52:15] DONE save outputs (0.30s)
+[20:52:15] summary final_mae=1.0923 acc@1=0.8628 runtime=13.48s
+[20:52:15] DONE epsilon sensitivity epsilon=0.0600 (13.77s)
+[20:52:15] START epsilon sensitivity epsilon=0.1200
+[20:52:15] experiment=compare_gradients backend=torch gradient=finite_difference decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\epsilon_0.1200
+[20:52:15] START build scene/renderer/decoder
+[20:52:15] DONE build scene/renderer/decoder (0.00s)
+[20:52:15] START initial evaluation
+[20:52:15] DONE initial evaluation (0.01s)
+[20:52:15] START training iterations=5
+[20:52:28] DONE training iterations=5 (12.44s)
+[20:52:28] START final evaluation
+[20:52:28] DONE final evaluation (0.01s)
+[20:52:28] START save outputs
+[20:52:28] DONE save outputs (0.29s)
+[20:52:28] summary final_mae=1.0566 acc@1=0.8607 runtime=12.46s
+[20:52:28] DONE epsilon sensitivity epsilon=0.1200 (12.75s)
+[20:52:28] START noise sensitivity method=finite_difference noise=0.000
+[20:52:28] experiment=compare_gradients backend=torch gradient=finite_difference decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\noise_finite_difference_0.000
+[20:52:28] START build scene/renderer/decoder
+[20:52:28] DONE build scene/renderer/decoder (0.00s)
+[20:52:28] START initial evaluation
+[20:52:28] DONE initial evaluation (0.01s)
+[20:52:28] START training iterations=5
+[20:52:41] DONE training iterations=5 (13.33s)
+[20:52:41] START final evaluation
+[20:52:41] DONE final evaluation (0.01s)
+[20:52:41] START save outputs
+[20:52:42] DONE save outputs (0.32s)
+[20:52:42] summary final_mae=3.4201 acc@1=0.7774 runtime=13.34s
+[20:52:42] DONE noise sensitivity method=finite_difference noise=0.000 (13.67s)
+[20:52:42] START noise sensitivity method=finite_difference noise=0.005
+[20:52:42] experiment=compare_gradients backend=torch gradient=finite_difference decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\noise_finite_difference_0.005
+[20:52:42] START build scene/renderer/decoder
+[20:52:42] DONE build scene/renderer/decoder (0.00s)
+[20:52:42] START initial evaluation
+[20:52:42] DONE initial evaluation (0.01s)
+[20:52:42] START training iterations=5
+[20:52:55] DONE training iterations=5 (13.65s)
+[20:52:55] START final evaluation
+[20:52:55] DONE final evaluation (0.01s)
+[20:52:55] START save outputs
+[20:52:56] DONE save outputs (0.35s)
+[20:52:56] summary final_mae=0.7367 acc@1=0.8734 runtime=13.67s
+[20:52:56] DONE noise sensitivity method=finite_difference noise=0.005 (14.02s)
+[20:52:56] START noise sensitivity method=finite_difference noise=0.012
+[20:52:56] experiment=compare_gradients backend=torch gradient=finite_difference decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\noise_finite_difference_0.012
+[20:52:56] START build scene/renderer/decoder
+[20:52:56] DONE build scene/renderer/decoder (0.00s)
+[20:52:56] START initial evaluation
+[20:52:56] DONE initial evaluation (0.01s)
+[20:52:56] START training iterations=5
+[20:53:08] DONE training iterations=5 (12.04s)
+[20:53:08] START final evaluation
+[20:53:08] DONE final evaluation (0.01s)
+[20:53:08] START save outputs
+[20:53:08] DONE save outputs (0.29s)
+[20:53:08] summary final_mae=2.5364 acc@1=0.8071 runtime=12.05s
+[20:53:08] DONE noise sensitivity method=finite_difference noise=0.012 (12.35s)
+[20:53:08] START noise sensitivity method=finite_difference noise=0.025
+[20:53:08] experiment=compare_gradients backend=torch gradient=finite_difference decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\noise_finite_difference_0.025
+[20:53:08] START build scene/renderer/decoder
+[20:53:08] DONE build scene/renderer/decoder (0.00s)
+[20:53:08] START initial evaluation
+[20:53:08] DONE initial evaluation (0.01s)
+[20:53:08] START training iterations=5
+[20:53:22] DONE training iterations=5 (13.74s)
+[20:53:22] START final evaluation
+[20:53:22] DONE final evaluation (0.01s)
+[20:53:22] START save outputs
+[20:53:22] DONE save outputs (0.37s)
+[20:53:22] summary final_mae=2.7998 acc@1=0.7633 runtime=13.76s
+[20:53:22] DONE noise sensitivity method=finite_difference noise=0.025 (14.12s)
+[20:53:22] START noise sensitivity method=finite_difference noise=0.050
+[20:53:22] experiment=compare_gradients backend=torch gradient=finite_difference decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\noise_finite_difference_0.050
+[20:53:22] START build scene/renderer/decoder
+[20:53:22] DONE build scene/renderer/decoder (0.00s)
+[20:53:22] START initial evaluation
+[20:53:22] DONE initial evaluation (0.01s)
+[20:53:22] START training iterations=5
+[20:53:36] DONE training iterations=5 (13.72s)
+[20:53:36] START final evaluation
+[20:53:36] DONE final evaluation (0.01s)
+[20:53:36] START save outputs
+[20:53:36] DONE save outputs (0.28s)
+[20:53:36] summary final_mae=2.9914 acc@1=0.6187 runtime=13.73s
+[20:53:36] DONE noise sensitivity method=finite_difference noise=0.050 (14.01s)
+[20:53:36] START noise sensitivity method=autograd noise=0.000
+[20:53:36] experiment=compare_gradients backend=torch gradient=autograd decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\noise_autograd_0.000
+[20:53:36] START build scene/renderer/decoder
+[20:53:36] DONE build scene/renderer/decoder (0.00s)
+[20:53:36] START initial evaluation
+[20:53:36] DONE initial evaluation (0.01s)
+[20:53:36] START training iterations=5
+[20:53:36] DONE training iterations=5 (0.08s)
+[20:53:36] START final evaluation
+[20:53:36] DONE final evaluation (0.01s)
+[20:53:36] START save outputs
+[20:53:37] DONE save outputs (0.29s)
+[20:53:37] summary final_mae=0.8126 acc@1=0.9028 runtime=0.10s
+[20:53:37] DONE noise sensitivity method=autograd noise=0.000 (0.39s)
+[20:53:37] START noise sensitivity method=autograd noise=0.005
+[20:53:37] experiment=compare_gradients backend=torch gradient=autograd decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\noise_autograd_0.005
+[20:53:37] START build scene/renderer/decoder
+[20:53:37] DONE build scene/renderer/decoder (0.00s)
+[20:53:37] START initial evaluation
+[20:53:37] DONE initial evaluation (0.01s)
+[20:53:37] START training iterations=5
+[20:53:37] DONE training iterations=5 (0.09s)
+[20:53:37] START final evaluation
+[20:53:37] DONE final evaluation (0.01s)
+[20:53:37] START save outputs
+[20:53:37] DONE save outputs (0.32s)
+[20:53:37] summary final_mae=1.4347 acc@1=0.8654 runtime=0.11s
+[20:53:37] DONE noise sensitivity method=autograd noise=0.005 (0.42s)
+[20:53:37] START noise sensitivity method=autograd noise=0.012
+[20:53:37] experiment=compare_gradients backend=torch gradient=autograd decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\noise_autograd_0.012
+[20:53:37] START build scene/renderer/decoder
+[20:53:37] DONE build scene/renderer/decoder (0.00s)
+[20:53:37] START initial evaluation
+[20:53:37] DONE initial evaluation (0.01s)
+[20:53:37] START training iterations=5
+[20:53:37] DONE training iterations=5 (0.09s)
+[20:53:37] START final evaluation
+[20:53:37] DONE final evaluation (0.01s)
+[20:53:37] START save outputs
+[20:53:37] DONE save outputs (0.31s)
+[20:53:37] summary final_mae=2.6062 acc@1=0.8045 runtime=0.11s
+[20:53:37] DONE noise sensitivity method=autograd noise=0.012 (0.42s)
+[20:53:37] START noise sensitivity method=autograd noise=0.025
+[20:53:37] experiment=compare_gradients backend=torch gradient=autograd decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\noise_autograd_0.025
+[20:53:37] START build scene/renderer/decoder
+[20:53:37] DONE build scene/renderer/decoder (0.00s)
+[20:53:37] START initial evaluation
+[20:53:37] DONE initial evaluation (0.01s)
+[20:53:37] START training iterations=5
+[20:53:38] DONE training iterations=5 (0.13s)
+[20:53:38] START final evaluation
+[20:53:38] DONE final evaluation (0.01s)
+[20:53:38] START save outputs
+[20:53:38] DONE save outputs (0.37s)
+[20:53:38] summary final_mae=2.5076 acc@1=0.7326 runtime=0.16s
+[20:53:38] DONE noise sensitivity method=autograd noise=0.025 (0.53s)
+[20:53:38] START noise sensitivity method=autograd noise=0.050
+[20:53:38] experiment=compare_gradients backend=torch gradient=autograd decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\noise_autograd_0.050
+[20:53:38] START build scene/renderer/decoder
+[20:53:38] DONE build scene/renderer/decoder (0.00s)
+[20:53:38] START initial evaluation
+[20:53:38] DONE initial evaluation (0.01s)
+[20:53:38] START training iterations=5
+[20:53:38] DONE training iterations=5 (0.10s)
+[20:53:38] START final evaluation
+[20:53:38] DONE final evaluation (0.01s)
+[20:53:38] START save outputs
+[20:53:38] DONE save outputs (0.30s)
+[20:53:38] summary final_mae=4.4224 acc@1=0.5468 runtime=0.11s
+[20:53:38] DONE noise sensitivity method=autograd noise=0.050 (0.42s)
+[20:53:38] START pattern-count sensitivity method=finite_difference count=2
+[20:53:38] experiment=compare_gradients backend=torch gradient=finite_difference decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\patterns_finite_difference_2
+[20:53:38] START build scene/renderer/decoder
+[20:53:38] DONE build scene/renderer/decoder (0.00s)
+[20:53:38] START initial evaluation
+[20:53:38] DONE initial evaluation (0.01s)
+[20:53:38] START training iterations=5
+[20:53:45] DONE training iterations=5 (6.79s)
+[20:53:45] START final evaluation
+[20:53:45] DONE final evaluation (0.01s)
+[20:53:45] START save outputs
+[20:53:45] DONE save outputs (0.30s)
+[20:53:45] summary final_mae=22.6743 acc@1=0.0471 runtime=6.80s
+[20:53:45] DONE pattern-count sensitivity method=finite_difference count=2 (7.11s)
+[20:53:45] START pattern-count sensitivity method=finite_difference count=4
+[20:53:45] experiment=compare_gradients backend=torch gradient=finite_difference decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\patterns_finite_difference_4
+[20:53:45] START build scene/renderer/decoder
+[20:53:45] DONE build scene/renderer/decoder (0.00s)
+[20:53:45] START initial evaluation
+[20:53:45] DONE initial evaluation (0.01s)
+[20:53:45] START training iterations=5
+[20:53:59] DONE training iterations=5 (13.64s)
+[20:53:59] START final evaluation
+[20:53:59] DONE final evaluation (0.01s)
+[20:53:59] START save outputs
+[20:53:59] DONE save outputs (0.29s)
+[20:53:59] summary final_mae=0.7367 acc@1=0.8734 runtime=13.65s
+[20:53:59] DONE pattern-count sensitivity method=finite_difference count=4 (13.95s)
+[20:53:59] START pattern-count sensitivity method=finite_difference count=8
+[20:53:59] experiment=compare_gradients backend=torch gradient=finite_difference decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\patterns_finite_difference_8
+[20:53:59] START build scene/renderer/decoder
+[20:53:59] DONE build scene/renderer/decoder (0.00s)
+[20:53:59] START initial evaluation
+[20:53:59] DONE initial evaluation (0.01s)
+[20:53:59] START training iterations=5
+[20:54:29] DONE training iterations=5 (29.36s)
+[20:54:29] START final evaluation
+[20:54:29] DONE final evaluation (0.01s)
+[20:54:29] START save outputs
+[20:54:29] DONE save outputs (0.32s)
+[20:54:29] summary final_mae=0.2517 acc@1=1.0000 runtime=29.38s
+[20:54:29] DONE pattern-count sensitivity method=finite_difference count=8 (29.70s)
+[20:54:29] START pattern-count sensitivity method=autograd count=2
+[20:54:29] experiment=compare_gradients backend=torch gradient=autograd decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\patterns_autograd_2
+[20:54:29] START build scene/renderer/decoder
+[20:54:29] DONE build scene/renderer/decoder (0.00s)
+[20:54:29] START initial evaluation
+[20:54:29] DONE initial evaluation (0.01s)
+[20:54:29] START training iterations=5
+[20:54:29] DONE training iterations=5 (0.08s)
+[20:54:29] START final evaluation
+[20:54:29] DONE final evaluation (0.01s)
+[20:54:29] START save outputs
+[20:54:29] DONE save outputs (0.31s)
+[20:54:29] summary final_mae=22.9690 acc@1=0.0530 runtime=0.09s
+[20:54:29] DONE pattern-count sensitivity method=autograd count=2 (0.41s)
+[20:54:29] START pattern-count sensitivity method=autograd count=4
+[20:54:29] experiment=compare_gradients backend=torch gradient=autograd decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\patterns_autograd_4
+[20:54:29] START build scene/renderer/decoder
+[20:54:29] DONE build scene/renderer/decoder (0.00s)
+[20:54:29] START initial evaluation
+[20:54:29] DONE initial evaluation (0.01s)
+[20:54:29] START training iterations=5
+[20:54:30] DONE training iterations=5 (0.09s)
+[20:54:30] START final evaluation
+[20:54:30] DONE final evaluation (0.01s)
+[20:54:30] START save outputs
+[20:54:30] DONE save outputs (0.29s)
+[20:54:30] summary final_mae=1.4347 acc@1=0.8654 runtime=0.10s
+[20:54:30] DONE pattern-count sensitivity method=autograd count=4 (0.39s)
+[20:54:30] START pattern-count sensitivity method=autograd count=8
+[20:54:30] experiment=compare_gradients backend=torch gradient=autograd decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\patterns_autograd_8
+[20:54:30] START build scene/renderer/decoder
+[20:54:30] DONE build scene/renderer/decoder (0.00s)
+[20:54:30] START initial evaluation
+[20:54:30] DONE initial evaluation (0.01s)
+[20:54:30] START training iterations=5
+[20:54:30] DONE training iterations=5 (0.12s)
+[20:54:30] START final evaluation
+[20:54:30] DONE final evaluation (0.01s)
+[20:54:30] START save outputs
+[20:54:30] DONE save outputs (0.34s)
+[20:54:30] summary final_mae=0.2521 acc@1=1.0000 runtime=0.14s
+[20:54:30] DONE pattern-count sensitivity method=autograd count=8 (0.48s)
+[20:54:30] START seed repeat method=finite_difference seed=7
+[20:54:30] experiment=compare_gradients backend=torch gradient=finite_difference decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\seed_7_finite_difference
+[20:54:30] START build scene/renderer/decoder
+[20:54:30] DONE build scene/renderer/decoder (0.00s)
+[20:54:30] START initial evaluation
+[20:54:30] DONE initial evaluation (0.01s)
+[20:54:30] START training iterations=8
+[20:54:52] DONE training iterations=8 (21.42s)
+[20:54:52] START final evaluation
+[20:54:52] DONE final evaluation (0.01s)
+[20:54:52] START save outputs
+[20:54:52] DONE save outputs (0.37s)
+[20:54:52] summary final_mae=0.6091 acc@1=0.9243 runtime=21.45s
+[20:54:52] DONE seed repeat method=finite_difference seed=7 (21.82s)
+[20:54:52] START seed repeat method=autograd seed=7
+[20:54:52] experiment=compare_gradients backend=torch gradient=autograd decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\seed_7_autograd
+[20:54:52] START build scene/renderer/decoder
+[20:54:52] DONE build scene/renderer/decoder (0.00s)
+[20:54:52] START initial evaluation
+[20:54:52] DONE initial evaluation (0.01s)
+[20:54:52] START training iterations=8
+[20:54:52] DONE training iterations=8 (0.14s)
+[20:54:52] START final evaluation
+[20:54:52] DONE final evaluation (0.01s)
+[20:54:52] START save outputs
+[20:54:53] DONE save outputs (0.30s)
+[20:54:53] summary final_mae=0.7327 acc@1=0.8813 runtime=0.16s
+[20:54:53] DONE seed repeat method=autograd seed=7 (0.46s)
+[20:54:53] START seed repeat method=finite_difference seed=11
+[20:54:53] experiment=compare_gradients backend=torch gradient=finite_difference decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\seed_11_finite_difference
+[20:54:53] START build scene/renderer/decoder
+[20:54:53] DONE build scene/renderer/decoder (0.00s)
+[20:54:53] START initial evaluation
+[20:54:53] DONE initial evaluation (0.01s)
+[20:54:53] START training iterations=8
+[20:55:14] DONE training iterations=8 (21.28s)
+[20:55:14] START final evaluation
+[20:55:14] DONE final evaluation (0.01s)
+[20:55:14] START save outputs
+[20:55:14] DONE save outputs (0.32s)
+[20:55:14] summary final_mae=1.1554 acc@1=0.8963 runtime=21.30s
+[20:55:14] DONE seed repeat method=finite_difference seed=11 (21.62s)
+[20:55:14] START seed repeat method=autograd seed=11
+[20:55:14] experiment=compare_gradients backend=torch gradient=autograd decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\seed_11_autograd
+[20:55:14] START build scene/renderer/decoder
+[20:55:14] DONE build scene/renderer/decoder (0.00s)
+[20:55:14] START initial evaluation
+[20:55:14] DONE initial evaluation (0.01s)
+[20:55:14] START training iterations=8
+[20:55:14] DONE training iterations=8 (0.14s)
+[20:55:14] START final evaluation
+[20:55:14] DONE final evaluation (0.01s)
+[20:55:14] START save outputs
+[20:55:15] DONE save outputs (0.30s)
+[20:55:15] summary final_mae=1.1351 acc@1=0.8784 runtime=0.16s
+[20:55:15] DONE seed repeat method=autograd seed=11 (0.47s)
+[20:55:15] START seed repeat method=finite_difference seed=19
+[20:55:15] experiment=compare_gradients backend=torch gradient=finite_difference decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\seed_19_finite_difference
+[20:55:15] START build scene/renderer/decoder
+[20:55:15] DONE build scene/renderer/decoder (0.00s)
+[20:55:15] START initial evaluation
+[20:55:15] DONE initial evaluation (0.01s)
+[20:55:15] START training iterations=8
+[20:55:36] DONE training iterations=8 (21.16s)
+[20:55:36] START final evaluation
+[20:55:36] DONE final evaluation (0.01s)
+[20:55:36] START save outputs
+[20:55:36] DONE save outputs (0.30s)
+[20:55:36] summary final_mae=2.1317 acc@1=0.8024 runtime=21.17s
+[20:55:36] DONE seed repeat method=finite_difference seed=19 (21.48s)
+[20:55:36] START seed repeat method=autograd seed=19
+[20:55:36] experiment=compare_gradients backend=torch gradient=autograd decoder=zncc material=diffuse output=C:\Users\Admin\Desktop\Lab2-opticalSGD\OpticalSGD\examples\compare_gradients\analysis\output\seed_19_autograd
+[20:55:36] START build scene/renderer/decoder
+[20:55:36] DONE build scene/renderer/decoder (0.00s)
+[20:55:36] START initial evaluation
+[20:55:36] DONE initial evaluation (0.01s)
+[20:55:36] START training iterations=8
+[20:55:36] DONE training iterations=8 (0.15s)
+[20:55:36] START final evaluation
+[20:55:36] DONE final evaluation (0.01s)
+[20:55:36] START save outputs
+[20:55:37] DONE save outputs (0.30s)
+[20:55:37] summary final_mae=1.2254 acc@1=0.8534 runtime=0.16s
+[20:55:37] DONE seed repeat method=autograd seed=19 (0.47s)
