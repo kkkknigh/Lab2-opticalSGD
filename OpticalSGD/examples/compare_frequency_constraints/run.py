@@ -4,7 +4,7 @@ from copy import deepcopy
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from examples.common_logging import StepTimer, log_step
+from examples.common_logging import StepTimer, configure_log_file, log_step
 from examples.train_patterns.run import run_pattern_training
 from optical_sgd.configuration.loader import load_config
 from optical_sgd.result_saving.savers import prepare_output_directory, save_metrics_json, save_rows_csv
@@ -17,6 +17,7 @@ def run_frequency_comparison(config: dict, output_dir: Path) -> dict:
     """比较不同低通比例对 pattern 频谱、精度和运行时间的影响。"""
 
     output_dir = prepare_output_directory(output_dir)
+    configure_log_file(output_dir / "run.log")
     log_step(f"frequency comparison output={output_dir}")
     fractions = config.get("frequency_comparison", {}).get("lowpass_fractions", [0.35])
     rows = []
@@ -27,7 +28,7 @@ def run_frequency_comparison(config: dict, output_dir: Path) -> dict:
         run_cfg["patterns"]["lowpass_fraction"] = fraction
         relative_dir = f"lowpass_{fraction:.2f}"
         with StepTimer(f"lowpass_fraction={fraction:.2f}"):
-            metrics = run_pattern_training(run_cfg, output_dir / relative_dir)
+            metrics = run_pattern_training(run_cfg, output_dir / relative_dir, configure_logging=False)
         row = {"lowpass_fraction": fraction, **metrics}
         rows.append(row)
         summary[f"{fraction:.2f}"] = row

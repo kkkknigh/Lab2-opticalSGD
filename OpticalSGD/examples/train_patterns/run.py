@@ -6,7 +6,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from examples.common_logging import StepTimer, log_step
+from examples.common_logging import StepTimer, configure_log_file, log_step
 from optical_sgd.evaluation.correspondence_metrics import error_map, threshold_accuracy
 from optical_sgd.configuration.loader import load_config
 from optical_sgd.experiments.experiment_setup import (
@@ -29,8 +29,10 @@ from optical_sgd.result_saving.savers import (
 CONFIG_PATH = Path(__file__).with_name("config.yaml")
 
 
-def run_pattern_training(config: dict, output_dir: Path) -> dict:
+def run_pattern_training(config: dict, output_dir: Path, configure_logging: bool = True) -> dict:
     output_dir = prepare_output_directory(output_dir)
+    if configure_logging:
+        configure_log_file(output_dir / "run.log")
     experiment_name = str(config.get("experiment", {}).get("name", output_dir.name))
     log_step(
         f"experiment={experiment_name} backend={config['renderer'].get('backend')} "

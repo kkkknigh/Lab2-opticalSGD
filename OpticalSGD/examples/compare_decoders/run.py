@@ -4,7 +4,7 @@ from copy import deepcopy
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from examples.common_logging import StepTimer, log_step
+from examples.common_logging import StepTimer, configure_log_file, log_step
 from examples.train_patterns.run import run_pattern_training
 from optical_sgd.configuration.loader import load_config
 from optical_sgd.result_saving.savers import prepare_output_directory, save_metrics_json, save_rows_csv
@@ -15,6 +15,7 @@ CONFIG_PATH = Path(__file__).with_name("config.yaml")
 
 def run_decoder_comparison(config: dict, output_dir: Path) -> dict:
     output_dir = prepare_output_directory(output_dir)
+    configure_log_file(output_dir / "run.log")
     log_step(f"decoder comparison output={output_dir}")
     comparison_cfg = config.get("decoder_comparison", {})
     variants = comparison_cfg.get("variants")
@@ -43,7 +44,11 @@ def run_decoder_comparison(config: dict, output_dir: Path) -> dict:
                 variant.get("joint_optimize_decoder", decoder_cfg["optimization"].get("joint_optimize_decoder", False))
             )
             with StepTimer(f"decoder={decoder_name} material={material}"):
-                metrics = run_pattern_training(decoder_cfg, output_dir / material / decoder_name)
+                metrics = run_pattern_training(
+                    decoder_cfg,
+                    output_dir / material / decoder_name,
+                    configure_logging=False,
+                )
             row = {
                 "material": material,
                 "decoder": decoder_name,

@@ -7,7 +7,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from examples.common_logging import StepTimer, log_step
+from examples.common_logging import StepTimer, configure_log_file, log_step
 from examples.train_patterns.run import run_pattern_training
 from optical_sgd.configuration.loader import load_config
 from optical_sgd.evaluation.gradient_metrics import cosine_similarity
@@ -28,6 +28,7 @@ CONFIG_PATH = Path(__file__).with_name("config.yaml")
 
 def run_gradient_comparison(config: dict, output_dir: Path) -> dict:
     output_dir = prepare_output_directory(output_dir)
+    configure_log_file(output_dir / "run.log")
     log_step(f"gradient comparison output={output_dir}")
     with StepTimer("gradient stability estimate"):
         stability_rows = [_estimate_gradient_stability(config)]
@@ -40,7 +41,7 @@ def run_gradient_comparison(config: dict, output_dir: Path) -> dict:
         method_cfg["optimization"]["gradient_method"] = method
         with StepTimer(f"main gradient_method={method}"):
             start = perf_counter()
-            metrics = run_pattern_training(method_cfg, output_dir / method)
+            metrics = run_pattern_training(method_cfg, output_dir / method, configure_logging=False)
             elapsed = perf_counter() - start
         row = {"gradient_method": method, "runtime_seconds": elapsed, **metrics}
         rows.append(row)
@@ -65,7 +66,11 @@ def run_gradient_comparison(config: dict, output_dir: Path) -> dict:
         )
         with StepTimer(f"epsilon sensitivity epsilon={float(epsilon):.4f}"):
             start = perf_counter()
-            metrics = run_pattern_training(epsilon_cfg, output_dir / f"epsilon_{float(epsilon):.4f}")
+            metrics = run_pattern_training(
+                epsilon_cfg,
+                output_dir / f"epsilon_{float(epsilon):.4f}",
+                configure_logging=False,
+            )
         epsilon_rows.append({"epsilon": float(epsilon), "runtime_seconds": perf_counter() - start, **metrics})
     save_rows_csv(output_dir / "finite_difference_epsilon_sensitivity.csv", epsilon_rows)
 
@@ -85,7 +90,11 @@ def run_gradient_comparison(config: dict, output_dir: Path) -> dict:
             )
             with StepTimer(f"noise sensitivity method={method} noise={float(noise_std):.3f}"):
                 start = perf_counter()
-                metrics = run_pattern_training(noise_cfg, output_dir / f"noise_{method}_{float(noise_std):.3f}")
+                metrics = run_pattern_training(
+                    noise_cfg,
+                    output_dir / f"noise_{method}_{float(noise_std):.3f}",
+                    configure_logging=False,
+                )
             noise_rows.append(
                 {
                     "gradient_method": method,

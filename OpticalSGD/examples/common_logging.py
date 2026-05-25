@@ -1,13 +1,30 @@
 from __future__ import annotations
 
 from datetime import datetime
+from pathlib import Path
 from time import perf_counter
+
+_LOG_FILE: Path | None = None
+
+
+def configure_log_file(path: Path | None) -> None:
+    """设置当前实验的日志文件；为 None 时只输出到控制台。"""
+
+    global _LOG_FILE
+    _LOG_FILE = None if path is None else Path(path)
+    if _LOG_FILE is not None:
+        _LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+        _LOG_FILE.write_text("", encoding="utf-8")
 
 
 def log_step(message: str) -> None:
     """输出带时间戳的实验进度日志。"""
 
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] {message}", flush=True)
+    line = f"[{datetime.now().strftime('%H:%M:%S')}] {message}"
+    print(line, flush=True)
+    if _LOG_FILE is not None:
+        with _LOG_FILE.open("a", encoding="utf-8") as handle:
+            handle.write(line + "\n")
 
 
 class StepTimer:
