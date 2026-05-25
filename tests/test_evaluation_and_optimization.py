@@ -5,7 +5,7 @@ import numpy as np
 from optical_sgd.evaluation.correspondence_metrics import error_map, threshold_accuracy
 from optical_sgd.evaluation.gradient_metrics import cosine_similarity
 from optical_sgd.optimization.correspondence_losses import correspondence_mae
-from optical_sgd.optimization.finite_difference_gradient import FiniteDifferenceGradientEstimator
+from optical_sgd.optimization.gradient_estimators import FiniteDifferenceGradientEstimator
 
 
 def test_correspondence_metrics_respect_valid_mask_and_threshold():

@@ -1,4 +1,4 @@
-"""OpticalSGD training loop."""
+"""OpticalSGD pattern 优化主循环。"""
 
 from __future__ import annotations
 
@@ -11,9 +11,8 @@ from optical_sgd.correspondence_decoding.decoder_protocol import (
     TorchFeatureTransformProtocol,
     TrainableDecoderProtocol,
 )
-from optical_sgd.optimization.autograd_gradient import AutogradGradientEstimator
 from optical_sgd.optimization.correspondence_losses import correspondence_mae, soft_expected_l1_loss
-from optical_sgd.optimization.finite_difference_gradient import FiniteDifferenceGradientEstimator
+from optical_sgd.optimization.gradient_estimators import AutogradGradientEstimator, FiniteDifferenceGradientEstimator
 from optical_sgd.optimization.optimizer_state import OptimizerState
 from optical_sgd.pattern_generation.frequency_constraints import apply_frequency_constraint, clamp_patterns
 from optical_sgd.rendering.render_result import RenderResult
@@ -23,6 +22,8 @@ from optical_sgd.synthetic_scene import SceneDescription
 
 @dataclass
 class OpticalSGDOptimizer:
+    """负责执行 pattern 训练、评估和可选 decoder 联合更新。"""
+
     renderer: RendererProtocol | DifferentiableRendererProtocol
     decoder: DecoderProtocol
     scene: SceneDescription
@@ -35,11 +36,15 @@ class OpticalSGDOptimizer:
     decoder_learning_rate: float = 0.02
 
     def _estimator(self):
+        """根据配置选择 autograd 或有限差分梯度估计器。"""
+
         if self.gradient_method == "autograd":
             return AutogradGradientEstimator(self.finite_difference_epsilon)
         return FiniteDifferenceGradientEstimator(self.finite_difference_epsilon)
 
     def evaluate(self, patterns: np.ndarray) -> dict[str, float | np.ndarray]:
+        """渲染并解码当前 pattern，返回 loss、MAE 和可视化所需结果。"""
+
         result = self._render_numpy(patterns)
         decoded = self.decoder.decode(result.captured_images, patterns)
         loss = soft_expected_l1_loss(
@@ -61,6 +66,8 @@ class OpticalSGDOptimizer:
         }
 
     def train(self, initial_patterns: np.ndarray) -> tuple[np.ndarray, OptimizerState]:
+        """从初始 pattern 开始迭代优化，返回最终 pattern 和训练曲线。"""
+
         patterns = apply_frequency_constraint(initial_patterns, self.lowpass_fraction)
         state = OptimizerState()
         estimator = self._estimator()
@@ -86,13 +93,10 @@ class OpticalSGDOptimizer:
         return patterns.astype(np.float32), state
 
     def _optical_finite_difference_gradient(self, patterns: np.ndarray, fallback_loss_function) -> np.ndarray:
-        """Estimate pattern gradients with an image-Jacobian split.
+        """用链式法则估计 pattern 梯度。
 
-        This mirrors the OpticalSGD chain rule: perturb a projector control
-        value, render plus/minus images to estimate d image / d pattern, multiply
-        by d loss / d image, then add the direct decoder-codebook dependency.
-        If differentiating the image loss is unavailable, it falls back to the
-        older full-loss central difference so the public method remains usable.
+        - 对每个 pattern 元素做正负扰动，估计 captured_images 对 pattern 的局部雅可比，再乘上 loss 对 captured_images 的梯度，得到图像路径贡献。
+        - ZNCC decoder 直接使用 pattern 作为 projector codebook，这里额外计算 decoder codebook 路径的中心差分贡献。
         """
 
         try:
@@ -123,7 +127,7 @@ class OpticalSGDOptimizer:
         return gradient
 
     def _render_numpy(self, patterns: np.ndarray) -> RenderResult:
-        """按渲染器类型生成 NumPy 结果，Torch 后端不经过 render() 包装。"""
+        """按渲染器类型生成 NumPy 结果。"""
 
         if isinstance(self.renderer, DifferentiableRendererProtocol):
             torch_result = self.renderer.render_torch(patterns, self.scene)
@@ -140,6 +144,8 @@ class OpticalSGDOptimizer:
         raise TypeError("Renderer must provide render_torch() or render().")
 
     def _decoder_parameter_gradient(self, patterns: np.ndarray) -> np.ndarray:
+        """如果 decoder 可学习，则用有限差分估计 decoder 参数梯度。"""
+
         if not isinstance(self.decoder, TrainableDecoderProtocol):
             return np.zeros(0, dtype=np.float32)
         self.evaluate(patterns)
@@ -155,6 +161,8 @@ class OpticalSGDOptimizer:
         return gradient
 
     def _apply_decoder_update(self, gradient: np.ndarray) -> None:
+        """按 decoder_learning_rate 更新可学习 decoder 参数。"""
+
         if gradient.size == 0:
             return
         if not isinstance(self.decoder, TrainableDecoderProtocol):
@@ -164,6 +172,8 @@ class OpticalSGDOptimizer:
         self.decoder.set_parameter_vector(updated)
 
     def _loss_with_captured(self, captured_images: np.ndarray, patterns: np.ndarray, render_result) -> float:
+        """固定相机图像，只改变 projector codebook 时重新计算 loss。"""
+
         decoded = self.decoder.decode(captured_images, patterns)
         return soft_expected_l1_loss(
             decoded.scores,
@@ -173,7 +183,7 @@ class OpticalSGDOptimizer:
         )
 
     def _torch_soft_zncc_loss(self, pattern_tensor):
-        """Differentiable renderer + ZNCC soft correspondence loss."""
+        """可微渲染 + Torch 版 ZNCC soft correspondence loss。"""
 
         import torch
         if not isinstance(self.renderer, DifferentiableRendererProtocol):
@@ -193,11 +203,15 @@ class OpticalSGDOptimizer:
         return loss_map[valid_mask].mean()
 
     def _torch_device(self, torch):
+        """获取可微渲染器使用的 Torch 设备。"""
+
         if hasattr(self.renderer, "_resolve_device"):
             return self.renderer._resolve_device(torch, None)
         return "cpu"
 
     def _captured_loss_gradient(self, patterns: np.ndarray, captured_images: np.ndarray) -> np.ndarray:
+        """计算 loss 对 captured_images 的梯度，用于有限差分链式法则。"""
+
         import torch
 
         captured = torch.tensor(captured_images, dtype=torch.float32, requires_grad=True)
@@ -215,6 +229,8 @@ class OpticalSGDOptimizer:
         return captured.grad.detach().cpu().numpy().astype(np.float32)
 
     def _torch_decoder_scores(self, captured, patterns):
+        """用 Torch 张量实现 decoder 的 ZNCC 打分过程。"""
+
         radius = self.decoder.feature_radius
         image_features = self._torch_camera_features(captured, radius)
         projector_features = self._torch_projector_features(patterns, radius)
@@ -230,6 +246,8 @@ class OpticalSGDOptimizer:
 
     @staticmethod
     def _torch_normalize(features):
+        """对特征做零均值 L2 归一化。"""
+
         import torch
 
         centered = features - features.mean(dim=-1, keepdim=True)
@@ -238,6 +256,8 @@ class OpticalSGDOptimizer:
 
     @staticmethod
     def _torch_projector_features(patterns, radius: int):
+        """构造 projector pattern 的局部邻域特征。"""
+
         if radius == 0:
             return patterns.T
         padded = functional_pad_1d(patterns, radius)
@@ -250,6 +270,8 @@ class OpticalSGDOptimizer:
 
     @staticmethod
     def _torch_camera_features(captured, radius: int):
+        """构造 captured_images 的横向局部邻域特征。"""
+
         if radius == 0:
             return captured.permute(1, 2, 0)
         padded = functional_pad_2d_width(captured, radius)
@@ -262,24 +284,32 @@ class OpticalSGDOptimizer:
 
 
 def functional_pad_1d(patterns, radius: int):
+    """沿 projector 宽度方向复制边界并 padding。"""
+
     import torch.nn.functional as functional
 
     return functional.pad(patterns.unsqueeze(0), (radius, radius), mode="replicate").squeeze(0)
 
 
 def functional_pad_2d_width(captured, radius: int):
+    """沿相机图像宽度方向复制边界并 padding。"""
+
     import torch.nn.functional as functional
 
     return functional.pad(captured.unsqueeze(0), (radius, radius, 0, 0), mode="replicate").squeeze(0)
 
 
 def torch_stack_width(features):
+    """把逐列 camera 特征堆叠回宽度维。"""
+
     import torch
 
     return torch.stack(features, dim=1)
 
 
 def torch_stack_column(features):
+    """把逐列 projector 特征堆叠成列特征矩阵。"""
+
     import torch
 
     return torch.stack(features, dim=0)

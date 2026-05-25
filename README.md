@@ -72,8 +72,7 @@ OpticalSGD/
         |-- optimization/                                       # OpticalSGD 主循环、loss 和梯度估计
         |   |-- optimizer_state.py                              # OptimizerState，记录 iteration/loss/MAE/梯度范数历史
         |   |-- correspondence_losses.py                        # correspondence_mae() 与 soft_expected_l1_loss()
-        |   |-- finite_difference_gradient.py                   # FiniteDifferenceGradientEstimator，黑盒中心差分梯度估计
-        |   |-- autograd_gradient.py                            # AutogradGradientEstimator，基于 Torch autograd 的梯度估计
+        |   |-- gradient_estimators.py                          # 有限差分和 Torch autograd 梯度估计器
         |   `-- optical_sgd_optimizer.py                        # OpticalSGDOptimizer，更新 patterns 并可联合更新 decoder 参数
         |-- evaluation/                                         # 实验指标和计时工具
         |   |-- correspondence_metrics.py                       # threshold_accuracy() 与 error_map()

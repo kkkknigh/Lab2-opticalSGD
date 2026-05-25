@@ -17,7 +17,7 @@ from optical_sgd.experiments.experiment_setup import (
     build_renderer,
     build_scene,
 )
-from optical_sgd.optimization.autograd_gradient import AutogradGradientEstimator
+from optical_sgd.optimization.gradient_estimators import AutogradGradientEstimator
 from optical_sgd.pattern_generation.frequency_constraints import apply_frequency_constraint, clamp_patterns
 from optical_sgd.result_saving.output_directory import prepare_output_directory
 from optical_sgd.result_saving.table_saver import save_metrics_json, save_rows_csv
