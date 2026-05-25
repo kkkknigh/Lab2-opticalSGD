@@ -7,9 +7,7 @@ from optical_sgd.configuration.loader import load_config
 from optical_sgd.experiments.experiment_setup import build_initial_patterns, build_renderer, build_scene
 from optical_sgd.rendering.render_result import RenderResult
 from optical_sgd.rendering.renderer_protocol import DifferentiableRendererProtocol, RendererProtocol
-from optical_sgd.result_saving.image_saver import save_image
-from optical_sgd.result_saving.output_directory import prepare_output_directory
-from optical_sgd.result_saving.table_saver import save_metrics_json
+from optical_sgd.result_saving.savers import prepare_output_directory, save_image, save_metrics_json
 
 
 CONFIG_PATH = Path(__file__).with_name("config.yaml")

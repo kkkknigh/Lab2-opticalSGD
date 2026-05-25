@@ -19,8 +19,7 @@ from optical_sgd.experiments.experiment_setup import (
 )
 from optical_sgd.optimization.gradient_estimators import AutogradGradientEstimator
 from optical_sgd.pattern_generation.frequency_constraints import apply_frequency_constraint, clamp_patterns
-from optical_sgd.result_saving.output_directory import prepare_output_directory
-from optical_sgd.result_saving.table_saver import save_metrics_json, save_rows_csv
+from optical_sgd.result_saving.savers import prepare_output_directory, save_metrics_json, save_rows_csv
 
 
 CONFIG_PATH = Path(__file__).with_name("config.yaml")

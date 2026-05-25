@@ -15,11 +15,13 @@ from optical_sgd.experiments.experiment_setup import (
     build_scene,
 )
 from optical_sgd.pattern_generation.frequency_constraints import out_of_band_energy_ratio, spectrum_magnitude
-from optical_sgd.result_saving.checkpoint_saver import save_checkpoint
-from optical_sgd.result_saving.image_saver import save_image
-from optical_sgd.result_saving.output_directory import prepare_output_directory
-from optical_sgd.result_saving.plot_saver import save_line_plot
-from optical_sgd.result_saving.table_saver import save_metrics_json
+from optical_sgd.result_saving.savers import (
+    prepare_output_directory,
+    save_checkpoint,
+    save_image,
+    save_line_plot,
+    save_metrics_json,
+)
 
 
 CONFIG_PATH = Path(__file__).with_name("config.yaml")

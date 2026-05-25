@@ -6,8 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from examples.train_patterns.run import run_pattern_training
 from optical_sgd.configuration.loader import load_config
-from optical_sgd.result_saving.output_directory import prepare_output_directory
-from optical_sgd.result_saving.table_saver import save_metrics_json, save_rows_csv
+from optical_sgd.result_saving.savers import prepare_output_directory, save_metrics_json, save_rows_csv
 
 
 CONFIG_PATH = Path(__file__).with_name("config.yaml")

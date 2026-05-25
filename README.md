@@ -79,11 +79,7 @@ OpticalSGD/
         |   |-- gradient_metrics.py                             # cosine_similarity()，比较梯度方向
         |   `-- runtime_metrics.py                              # measure_seconds() 上下文管理器，记录运行耗时
         `-- result_saving/                                      # 统一保存实验输出
-            |-- output_directory.py                             # prepare_output_directory()，创建输出目录
-            |-- image_saver.py                                  # save_image()，保存灰度/伪彩色图像
-            |-- plot_saver.py                                   # save_line_plot()，保存训练曲线
-            |-- table_saver.py                                  # save_metrics_json() 与 save_rows_csv()
-            `-- checkpoint_saver.py                             # save_checkpoint()，保存 .npz checkpoint
+            `-- savers.py                                       # 输出目录、图片、曲线、JSON/CSV 和 checkpoint 保存
 ```
 
 ## 模块职责与接口
