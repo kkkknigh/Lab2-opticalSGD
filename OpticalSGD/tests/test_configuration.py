@@ -1,3 +1,9 @@
+"""配置模块单元测试。
+
+覆盖 `load_config()` 的默认配置合并和相对输出路径解析，以及 `validate_config()`
+对非法数值、缺失必需字段的输入校验。
+"""
+
 from __future__ import annotations
 
 from pathlib import Path

@@ -1,27 +1,65 @@
+"""评估指标和基础梯度估计器单元测试。
+
+覆盖 correspondence 阈值准确率、MAE、误差图、梯度余弦相似度、运行时间记录，
+以及有限差分估计器在二次函数上的输入输出。
+"""
+
 from __future__ import annotations
 
 import numpy as np
 
 from optical_sgd.evaluation.correspondence_metrics import error_map, threshold_accuracy
 from optical_sgd.evaluation.gradient_metrics import cosine_similarity
+from optical_sgd.evaluation.runtime_metrics import measure_seconds
 from optical_sgd.optimization.correspondence_losses import correspondence_mae
 from optical_sgd.optimization.gradient_estimators import FiniteDifferenceGradientEstimator
 
 
-def test_correspondence_metrics_respect_valid_mask_and_threshold():
+def test_threshold_accuracy_counts_only_valid_pixels():
     predicted = np.array([[0.0, 2.0], [5.0, 9.0]], dtype=np.float32)
     ground_truth = np.array([[0.0, 1.0], [3.0, 10.0]], dtype=np.float32)
     valid_mask = np.array([[True, True], [False, True]])
 
     assert threshold_accuracy(predicted, ground_truth, valid_mask, threshold=1.0) == 1.0
+
+
+def test_correspondence_mae_counts_only_valid_pixels():
+    predicted = np.array([[0.0, 2.0], [5.0, 9.0]], dtype=np.float32)
+    ground_truth = np.array([[0.0, 1.0], [3.0, 10.0]], dtype=np.float32)
+    valid_mask = np.array([[True, True], [False, True]])
+
     assert np.isclose(correspondence_mae(predicted, ground_truth, valid_mask), np.mean([0.0, 1.0, 1.0]))
+
+
+def test_error_map_returns_absolute_float32_errors():
+    predicted = np.array([[0.0, 2.0], [5.0, 9.0]], dtype=np.float32)
+    ground_truth = np.array([[0.0, 1.0], [3.0, 10.0]], dtype=np.float32)
+
+    errors = error_map(predicted, ground_truth)
+
     assert np.array_equal(error_map(predicted, ground_truth), np.array([[0.0, 1.0], [2.0, 1.0]], dtype=np.float32))
+    assert errors.dtype == np.float32
 
 
-def test_cosine_similarity_and_finite_difference_gradient():
+def test_cosine_similarity_returns_zero_for_orthogonal_vectors():
     assert cosine_similarity(np.array([1.0, 0.0]), np.array([0.0, 1.0])) == 0.0
+
+
+def test_cosine_similarity_returns_one_for_same_direction():
     assert np.isclose(cosine_similarity(np.array([1.0, 1.0]), np.array([2.0, 2.0])), 1.0)
 
+
+def test_measure_seconds_writes_elapsed_time_to_container():
+    metrics = {}
+
+    with measure_seconds(metrics, "elapsed"):
+        pass
+
+    assert "elapsed" in metrics
+    assert metrics["elapsed"] >= 0.0
+
+
+def test_finite_difference_gradient_matches_quadratic_derivative():
     patterns = np.array([[1.0, -2.0]], dtype=np.float32)
     estimator = FiniteDifferenceGradientEstimator(epsilon=1e-3)
 

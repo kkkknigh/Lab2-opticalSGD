@@ -1,3 +1,9 @@
+"""投影仪-相机几何函数单元测试。
+
+覆盖 `sample_projector_columns()` 的线性插值与边界裁剪，以及
+`make_correspondence_map()` 的输出形状、列范围、深度视差和 valid_mask 行为。
+"""
+
 from __future__ import annotations
 
 import numpy as np

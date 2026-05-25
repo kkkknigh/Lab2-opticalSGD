@@ -1,3 +1,9 @@
+"""correspondence decoder 单元测试。
+
+覆盖特征归一化、camera/projector 邻域特征形状、标准 ZNCC 已知列解码，
+以及 ZNCC-NN 的协议能力和参数初始化约束。
+"""
+
 from __future__ import annotations
 
 import numpy as np
