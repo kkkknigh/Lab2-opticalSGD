@@ -3,6 +3,7 @@
 ## 环境依赖
 
 ```bash
+conda activate 3dv
 pip install -r requirements.txt
 ```
 
@@ -18,7 +19,7 @@ pytest OpticalSGD/tests/test_synthetic_scene.py::test_create_scene_returns_scene
 ## 代码框架
 
 ```text
-OpticalSGD/
+    |-- run_experiments.ps1                                     # 统一运行实验的 PowerShell 脚本
     |-- examples/                                               # 各实验的运行入口
     |   |-- self_check/
     |   |   |-- config.yaml                                     # 自检实验配置
@@ -35,6 +36,9 @@ OpticalSGD/
     |   |-- compare_materials/
     |   |   |-- config.yaml                                     # 材质对比配置
     |   |   `-- run.py                                          # 对比 diffuse/marble/wood/frosted_glass
+    |   |-- compare_frequency_constraints/
+    |   |   |-- config.yaml                                     # 频率约束对比配置
+    |   |   `-- run.py                                          # 对比不同 lowpass_fraction
     |   `-- compare_renderers/
     |       |-- config.yaml                                     # 渲染器对比配置
     |       `-- run.py                                          # 固定 finite_difference，对比 Torch 与 Mitsuba
@@ -95,7 +99,7 @@ patterns -> captured_images -> decoder scores -> loss -> pattern gradients
 
 Torch 渲染器提供 `render_torch()` 接口，返回 tensor 结果并保留梯度路径。
 
-`renderer.backend: mitsuba` 使用 Mitsuba 3，将一维 pattern 扩展成 projector emitter 的二维 bitmap texture，再由 camera sensor 渲染观测图。该后端是黑盒物理渲染器，只提供 `render()`，用于有限差分和物理渲染对比，不支持 autograd。
+`renderer.backend: mitsuba` 使用 Mitsuba 3，将一维 pattern 扩展成 projector emitter 的二维 bitmap texture，再由 camera sensor 渲染观测图。该后端只提供 `render()`，用于有限差分和物理渲染对比，不支持 autograd。
 
 ### 材质和场景
 
@@ -123,42 +127,49 @@ Torch 渲染器提供 `render_torch()` 接口，返回 tensor 结果并保留梯
 - camera feature residual MLP。
 - projector feature residual MLP。
 
-decoder 参数更新：
+nn decoder 参数更新：
 - `optimization.joint_optimize_decoder: false` 时，只更新 pattern。
-- `optimization.joint_optimize_decoder: true` 时，decoder 参数和 pattern 分开更新。
-- 如果 decoder 支持 autograd 参数接口，decoder 参数直接用 Torch 反传更新，不取决于 pattern 梯度是 `autograd` 还是 `finite_difference`。
+- `optimization.joint_optimize_decoder: true` 时，decoder 参数和 pattern 分别更新，且 decoder 固定采用 autograd更新。
 
-autograd：
-- pattern 梯度来自 Torch 计算图，不能调用 NumPy 版 decoder。
-- 如果 decoder 实现 `transform_torch_features()`，优化器会在 Torch 特征上调用这个接口。
-- 如果 `optimization.joint_optimize_decoder: true` 且 decoder 实现 autograd 参数接口，decoder 参数会以 `requires_grad=True` 的 Torch 张量参与 loss 反传。
-- 当前 `zncc_nn` 的响应曲线和 residual MLP 支持这种真正的 autograd 更新；普通 `zncc` 没有可学习参数。
-- pattern 和 decoder 是两组参数，分别使用 `learning_rate` 和 `decoder_learning_rate`；pattern 更新后还会做亮度裁剪和频率约束，decoder 参数不会做 pattern 的低通约束。
+### pattern 更新方式
 
-### 梯度方式
+`gradient_method: autograd`：自动求导，使用 PyTorch 直接反传 loss 到 pattern
 
-`gradient_method: autograd` ：使用 PyTorch 直接反传 loss 到 pattern；如果开启 `joint_optimize_decoder`，同时反传并更新支持 autograd 的 decoder 参数。
+`gradient_method: finite_difference`：按链式法则估计 pattern 梯度，`d image / d pattern` 单独有限差分
 
-`gradient_method: finite_difference` 使用链式估计：
-
-1. 渲染当前 pattern 得到 baseline captured images。
-2. 对 captured images 计算 `d loss / d image`。
-3. 对每个 pattern 控制量做 plus/minus 扰动并重新渲染。
-4. 估计 `d image / d pattern`，得到光学路径梯度。
-5. 额外加入 decoder codebook 对 pattern 的直接依赖项。
+  1. 渲染当前 pattern 得到 baseline captured images。
+  2. 对 captured images 用 autograd 计算 `d loss / d image`。
+  3. 对每个 pattern 控制量做 plus/minus 扰动并重新渲染。
+  4. 用正负扰动结果估计 `d image / d pattern`，得到光学路径梯度。
+  5. 额外加入 decoder codebook 对 pattern 的直接依赖项梯度补偿。
 
 ### 频率约束
 
 每次 pattern 更新后都会执行：
 
 - `clamp_patterns()`：把亮度限制到 `[0, 1]`。
-- `apply_frequency_constraint()`：沿 projector 宽度做 FFT 低通。
+- `apply_frequency_constraint()`：沿 projector 宽度对每条一维 pattern 做 FFT，
+  只保留指定比例内的低频系数，把更高频的系数置零，再 inverse FFT 回空间域。
 
-训练会保存 `initial_pattern_spectrum.png`、`optimized_pattern_spectrum.png` 和带外能量占比，用于说明优化后 pattern 是否满足频率上限。
+这样可以避免优化 pattern 变成投影仪和相机难以稳定显示/采集的高频噪声。
 
 ## 实验入口
 
-每个实验都有自己的配置文件，路径 `OpticalSGD/examples/<experiment>/config.yaml`。
+每个实验都有自己的配置文件，路径 `examples/<experiment>/config.yaml`。建议从 `OpticalSGD/` 目录运行。
+
+统一 PowerShell 脚本会使用 conda 环境 `3dv`，并把完整日志保存到 `analysis/logs/`：
+
+```powershell
+.\run_experiments.ps1 -Experiment compare_decoders
+.\run_experiments.ps1 -Experiment all
+```
+
+也可以直接运行单个 Python 入口：
+
+```powershell
+conda activate 3dv
+python examples/compare_decoders/run.py
+```
 
 ### 渲染器自检
 
@@ -167,13 +178,13 @@ autograd：
 配置：
 
 ```text
-OpticalSGD/examples/self_check/config.yaml
+examples/self_check/config.yaml
 ```
 
 运行：
 
 ```bash
-python OpticalSGD/examples/self_check/run.py
+python examples/self_check/run.py
 ```
 
 ### Pattern 训练
@@ -183,13 +194,13 @@ python OpticalSGD/examples/self_check/run.py
 配置：
 
 ```text
-OpticalSGD/examples/train_patterns/config.yaml
+examples/train_patterns/config.yaml
 ```
 
 运行：
 
 ```bash
-python OpticalSGD/examples/train_patterns/run.py
+python examples/train_patterns/run.py
 ```
 
 ### 梯度方式对比
@@ -199,13 +210,13 @@ python OpticalSGD/examples/train_patterns/run.py
 配置：
 
 ```text
-OpticalSGD/examples/compare_gradients/config.yaml
+examples/compare_gradients/config.yaml
 ```
 
 运行：
 
 ```bash
-python OpticalSGD/examples/compare_gradients/run.py
+python examples/compare_gradients/run.py
 ```
 
 ### Decoder 对比
@@ -215,13 +226,13 @@ python OpticalSGD/examples/compare_gradients/run.py
 配置：
 
 ```text
-OpticalSGD/examples/compare_decoders/config.yaml
+examples/compare_decoders/config.yaml
 ```
 
 运行：
 
 ```bash
-python OpticalSGD/examples/compare_decoders/run.py
+python examples/compare_decoders/run.py
 ```
 
 ### 材质对比
@@ -231,13 +242,29 @@ python OpticalSGD/examples/compare_decoders/run.py
 配置：
 
 ```text
-OpticalSGD/examples/compare_materials/config.yaml
+examples/compare_materials/config.yaml
 ```
 
 运行：
 
 ```bash
-python OpticalSGD/examples/compare_materials/run.py
+python examples/compare_materials/run.py
+```
+
+### 频率约束对比
+
+关注点：固定场景、decoder、初始化和梯度方式，只改变 `lowpass_fraction`，比较频率上限对最终精度、频谱和带外能量占比的影响。
+
+配置：
+
+```text
+examples/compare_frequency_constraints/config.yaml
+```
+
+运行：
+
+```bash
+python examples/compare_frequency_constraints/run.py
 ```
 
 ### 渲染器对比
@@ -247,18 +274,18 @@ python OpticalSGD/examples/compare_materials/run.py
 配置：
 
 ```text
-OpticalSGD/examples/compare_renderers/config.yaml
+examples/compare_renderers/config.yaml
 ```
 
 运行：
 
 ```bash
-python OpticalSGD/examples/compare_renderers/run.py
+python examples/compare_renderers/run.py
 ```
 
 ## 输出内容
 
-常见输出文件：
+训练实验会保存：
 
 - `metrics.json`
 - `initial_patterns.png`
@@ -272,6 +299,8 @@ python OpticalSGD/examples/compare_renderers/run.py
 - `decoder_gradient_norm_curve.png`
 - `checkpoint.npz`
 
+`metrics.json` 包含 loss、MAE、`accuracy_error_le_1/2/5`、运行时间、梯度范数、带外频谱能量占比等字段。
+
 对比实验还会输出 CSV：
 
 - `gradient_comparison.csv`
@@ -280,5 +309,8 @@ python OpticalSGD/examples/compare_renderers/run.py
 - `noise_sensitivity.csv`
 - `decoder_comparison.csv`
 - `material_comparison.csv`
+- `frequency_constraint_comparison.csv`
 - `renderer_comparison.csv`
 - `system_comparison.csv`
+
+所有实验脚本都会在控制台输出带时间戳的进度日志；统一 PowerShell 脚本会额外把每个实验日志写入 `analysis/logs/`。

@@ -5,6 +5,7 @@ from time import perf_counter
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+from examples.common_logging import StepTimer, log_step
 from examples.train_patterns.run import run_pattern_training
 from optical_sgd.configuration.loader import load_config
 from optical_sgd.result_saving.savers import prepare_output_directory, save_metrics_json, save_rows_csv
@@ -15,6 +16,7 @@ CONFIG_PATH = Path(__file__).with_name("config.yaml")
 
 def run_renderer_comparison(config: dict, output_dir: Path) -> dict:
     output_dir = prepare_output_directory(output_dir)
+    log_step(f"renderer comparison output={output_dir}")
     analysis_cfg = config.get("renderer_comparison", {})
     materials = analysis_cfg.get("materials", ["diffuse", "marble", "wood", "frosted_glass"])
     depth_profiles = analysis_cfg.get("depth_profiles", ["flat", "bump", "slanted_wave"])
@@ -33,8 +35,12 @@ def run_renderer_comparison(config: dict, output_dir: Path) -> dict:
                     run_cfg["scene"]["depth_profile"] = depth_profile
                     run_cfg["optimization"]["gradient_method"] = gradient_method
                     relative_dir = f"{backend}_{gradient_method}_{material}_{depth_profile}_noise{float(noise_std):.3f}"
-                    start = perf_counter()
-                    metrics = run_pattern_training(run_cfg, output_dir / relative_dir)
+                    with StepTimer(
+                        f"renderer={backend} gradient={gradient_method} material={material} "
+                        f"depth={depth_profile} noise={float(noise_std):.3f}"
+                    ):
+                        start = perf_counter()
+                        metrics = run_pattern_training(run_cfg, output_dir / relative_dir)
                     rows.append(
                         {
                             "backend": backend,
@@ -69,8 +75,12 @@ def run_renderer_comparison(config: dict, output_dir: Path) -> dict:
                     run_cfg["scene"]["depth_profile"] = depth_profile
                     run_cfg["optimization"]["gradient_method"] = path_gradient_method
                     relative_dir = f"system_{path_name}_{material}_{depth_profile}_noise{float(noise_std):.3f}"
-                    start = perf_counter()
-                    metrics = run_pattern_training(run_cfg, output_dir / relative_dir)
+                    with StepTimer(
+                        f"system_path={path_name} backend={backend} gradient={path_gradient_method} "
+                        f"material={material} depth={depth_profile} noise={float(noise_std):.3f}"
+                    ):
+                        start = perf_counter()
+                        metrics = run_pattern_training(run_cfg, output_dir / relative_dir)
                     system_rows.append(
                         {
                             "path": path_name,

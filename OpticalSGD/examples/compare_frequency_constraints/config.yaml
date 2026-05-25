@@ -1,0 +1,41 @@
+experiment:
+  name: compare_frequency_constraints
+  output_dir: analysis/output
+
+renderer:
+  backend: torch
+  device: auto
+  camera_width: 256
+  scene_height: 48
+  projector_width: 128
+  noise_std: 0.012
+  depth_shading_strength: 0.3
+  ambient: 0.12
+
+scene:
+  depth_profile: slanted_wave
+  material: marble
+  camera_width: 256
+  scene_height: 48
+
+patterns:
+  count: 6
+  initial_method: random
+  seed: 7
+  lowpass_fraction: 0.35
+  apply_frequency_constraint: true
+
+decoder:
+  type: zncc
+  neighborhood: 1
+
+optimization:
+  gradient_method: autograd
+  iterations: 40
+  learning_rate: 0.25
+  epsilon: 0.03
+  temperature: 25.0
+  joint_optimize_decoder: false
+
+frequency_comparison:
+  lowpass_fractions: [0.2, 0.35, 0.5, 0.75, 1.0]
