@@ -1,0 +1,7 @@
+{
+  "constant_mean_intensity": 0.4032835066318512,
+  "stripes_mean_intensity": 0.40752989053726196,
+  "random_mean_intensity": 0.40176594257354736,
+  "material": "diffuse",
+  "material_description": "Lambertian baseline with mild sinusoidal albedo."
+}

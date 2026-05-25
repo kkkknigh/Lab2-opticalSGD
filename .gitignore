@@ -3,4 +3,4 @@ __pycache__/
 .pytest_cache/
 .pytest_tmp/
 *.pyc
-OpticalSGD/examples/*/analysis/
+logs/

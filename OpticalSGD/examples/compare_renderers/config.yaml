@@ -5,20 +5,22 @@ experiment:
 renderer:
   backend: torch
   device: auto
-  camera_width: 256
-  scene_height: 32
-  projector_width: 128
+  camera_width: 16
+  scene_height: 8
+  projector_width: 8
   noise_std: 0.012
   depth_shading_strength: 0.3
   ambient: 0.12
+  spp: 1
+  pattern_texture_height: 4
 
 scene:
   depth_profile: slanted_wave
-  camera_width: 256
-  scene_height: 32
+  camera_width: 16
+  scene_height: 8
 
 patterns:
-  count: 4
+  count: 2
   initial_method: random
   seed: 7
   lowpass_fraction: 0.35
@@ -30,7 +32,7 @@ decoder:
 
 optimization:
   gradient_method: finite_difference
-  iterations: 30
+  iterations: 1
   learning_rate: 0.25
   epsilon: 0.03
   temperature: 25.0
@@ -43,9 +45,6 @@ renderer_comparison:
     - name: torch_autograd
       backend: torch
       gradient_method: autograd
-    - name: mitsuba_finite_difference
-      backend: mitsuba
-      gradient_method: finite_difference
   materials: [diffuse]
-  noise_levels: [0.0, 0.012]
-  depth_profiles: [flat, slanted_wave]
+  noise_levels: [0.012]
+  depth_profiles: [slanted_wave]
