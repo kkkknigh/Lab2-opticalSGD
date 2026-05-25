@@ -61,11 +61,9 @@ OpticalSGD/
         |       |-- marble.py                                   # make_marble()，大理石纹理、veins、高光和轻微散射
         |       |-- wood.py                                     # make_wood()，木纹/年轮纹理材质
         |       `-- frosted_glass.py                            # make_frosted_glass()，强局部散射的磨砂玻璃近似
-        |-- pattern_generation/                                 # pattern 初始化、约束、频谱统计和保存
+        |-- pattern_generation/                                 # pattern 初始化、约束和频谱统计
         |   |-- initial_patterns.py                             # create_initial_patterns()，生成 random/stripes/constant pattern
-        |   |-- pattern_parameters.py                           # PatternParameters 数据类，封装可优化 pattern 数组
-        |   |-- frequency_constraints.py                        # clamp、FFT 低通、频谱幅值和带外能量占比
-        |   `-- pattern_saving.py                               # save_patterns_npz()，保存 pattern 数组
+        |   `-- frequency_constraints.py                        # clamp、FFT 低通、频谱幅值和带外能量占比
         |-- correspondence_decoding/                            # 从相机观测恢复 projector 列对应关系
         |   |-- decoder_protocol.py                             # DecoderProtocol、TrainableDecoderProtocol 等抽象接口
         |   |-- feature_extraction.py                           # 特征归一化、projector/camera 邻域特征构造
@@ -137,16 +135,14 @@ OpticalSGD/
 
 ### `pattern_generation/`
 
-负责 pattern 初始化、参数封装、取值约束、频率约束和频谱统计。
+负责 pattern 初始化、取值约束、频率约束和频谱统计。
 
 对外接口：
 - `create_initial_patterns(count, width, method, seed)`：生成 `random`、`stripes`、`constant` 等初始 pattern。
-- `PatternParameters`：封装可优化 pattern 数组。
 - `clamp_patterns(patterns)`：把 pattern 限制到 `[0, 1]`。
 - `apply_frequency_constraint(patterns, lowpass_fraction)`：FFT 低通约束。
 - `spectrum_magnitude(patterns)`：计算频谱幅值。
 - `out_of_band_energy_ratio(patterns, lowpass_fraction)`：统计带外能量占比。
-- `save_patterns_npz(path, patterns)`：保存 pattern 数组。
 
 ### `correspondence_decoding/`
 
