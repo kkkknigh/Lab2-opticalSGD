@@ -16,13 +16,14 @@ from optical_sgd.optimization.correspondence_losses import correspondence_mae, s
 from optical_sgd.optimization.finite_difference_gradient import FiniteDifferenceGradientEstimator
 from optical_sgd.optimization.optimizer_state import OptimizerState
 from optical_sgd.pattern_generation.frequency_constraints import apply_frequency_constraint, clamp_patterns
+from optical_sgd.rendering.render_result import RenderResult
 from optical_sgd.rendering.renderer_protocol import DifferentiableRendererProtocol, RendererProtocol
-from optical_sgd.synthetic_scene.scene_description import SceneDescription
+from optical_sgd.synthetic_scene import SceneDescription
 
 
 @dataclass
 class OpticalSGDOptimizer:
-    renderer: RendererProtocol
+    renderer: RendererProtocol | DifferentiableRendererProtocol
     decoder: DecoderProtocol
     scene: SceneDescription
     learning_rate: float = 0.1
@@ -39,7 +40,7 @@ class OpticalSGDOptimizer:
         return FiniteDifferenceGradientEstimator(self.finite_difference_epsilon)
 
     def evaluate(self, patterns: np.ndarray) -> dict[str, float | np.ndarray]:
-        result = self.renderer.render(patterns, self.scene)
+        result = self._render_numpy(patterns)
         decoded = self.decoder.decode(result.captured_images, patterns)
         loss = soft_expected_l1_loss(
             decoded.scores,
@@ -95,7 +96,7 @@ class OpticalSGDOptimizer:
         """
 
         try:
-            base_result = self.renderer.render(patterns, self.scene)
+            base_result = self._render_numpy(patterns)
             image_loss_gradient = self._captured_loss_gradient(patterns, base_result.captured_images)
         except Exception:
             return self._estimator().estimate(patterns, fallback_loss_function)
@@ -110,8 +111,8 @@ class OpticalSGDOptimizer:
             plus = apply_frequency_constraint(clamp_patterns(plus), self.lowpass_fraction)
             minus = apply_frequency_constraint(clamp_patterns(minus), self.lowpass_fraction)
 
-            plus_result = self.renderer.render(plus, self.scene)
-            minus_result = self.renderer.render(minus, self.scene)
+            plus_result = self._render_numpy(plus)
+            minus_result = self._render_numpy(minus)
             image_jacobian_column = (plus_result.captured_images - minus_result.captured_images) / (2.0 * epsilon)
             image_path = float(np.sum(image_loss_gradient * image_jacobian_column))
 
@@ -120,6 +121,23 @@ class OpticalSGDOptimizer:
             decoder_path = (direct_plus - direct_minus) / (2.0 * epsilon)
             gradient[index] = image_path + decoder_path
         return gradient
+
+    def _render_numpy(self, patterns: np.ndarray) -> RenderResult:
+        """按渲染器类型生成 NumPy 结果，Torch 后端不经过 render() 包装。"""
+
+        if isinstance(self.renderer, DifferentiableRendererProtocol):
+            torch_result = self.renderer.render_torch(patterns, self.scene)
+            captured = torch_result["captured_images"].detach().cpu().numpy().astype(np.float32)
+            return RenderResult(
+                captured_images=captured,
+                ground_truth_correspondence=self.scene.correspondence.astype(np.float32),
+                valid_mask=self.scene.valid_mask.astype(bool),
+                albedo=self.scene.albedo.astype(np.float32),
+                depth=self.scene.depth.astype(np.float32),
+            )
+        if isinstance(self.renderer, RendererProtocol):
+            return self.renderer.render(patterns, self.scene)
+        raise TypeError("Renderer must provide render_torch() or render().")
 
     def _decoder_parameter_gradient(self, patterns: np.ndarray) -> np.ndarray:
         if not isinstance(self.decoder, TrainableDecoderProtocol):

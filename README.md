@@ -47,15 +47,13 @@ OpticalSGD/
         |   `-- experiment_setup.py                             # build_scene/renderer/decoder/patterns/optimizer
         |-- rendering/                                          # projector-camera 几何和渲染后端
         |   |-- render_result.py                                # RenderResult 数据类，保存 captured_images/correspondence/valid_mask
-        |   |-- renderer_protocol.py                            # RendererProtocol 协议，统一 render(patterns, scene) 接口
+        |   |-- renderer_protocol.py                            # 黑盒 render() 与可微 render_torch() 协议
         |   |-- projector_camera_model.py                       # 生成 camera 到 projector 的 correspondence 并采样 projector 列
-        |   |-- torch_renderer.py                               # PyTorch 可微渲染器，支持 render() 与 render_torch()
+        |   |-- torch_renderer.py                               # PyTorch 可微渲染器，提供 render_torch()
         |   `-- mitsuba_renderer.py                             # Mitsuba 3 物理渲染器，作为黑盒有限差分后端
         |-- synthetic_scene/                                    # 合成场景、深度面、材质贴图和几何真值
-        |   |-- scene_description.py                            # SceneDescription 数据类，保存 depth/correspondence/valid_mask/material_maps
-        |   |-- scene_factory.py                                # create_scene(config)，组装深度、对应关系、mask 和材质
-        |   |-- depth_surfaces.py                               # make_depth_surface()，生成 flat/bump/slanted_wave 深度面
-        |   |-- material_textures.py                            # make_material_texture()，兼容旧式单通道材质纹理
+        |   |-- __init__.py                                     # 对外导出 synthetic_scene 公共 API
+        |   |-- scene.py                                        # SceneDescription/create_scene/depth
         |   `-- materials/                                      # 结构化材质参数模块
         |       |-- __init__.py                                 # 注册 make_material_maps() 和各材质构造函数
         |       |-- base.py                                     # MaterialMaps 数据类、normalized_grid()、constant_map()
@@ -118,10 +116,10 @@ OpticalSGD/
 实现 projector-camera 几何、渲染结果结构和两类渲染后端。Torch 后端支持 autograd，Mitsuba 后端作为物理黑盒用于有限差分。
 
 对外接口：
-- `TorchRenderer(config)`：PyTorch 可微渲染器，提供 `render()` 和 `render_torch()`。
+- `TorchRenderer(config)`：PyTorch 可微渲染器，提供 `render_torch()`。
 - `MitsubaRenderer(config)`：Mitsuba 物理渲染器，提供 `render()`。
-- `RendererProtocol`：渲染器协议，约定 `render(patterns, scene) -> RenderResult`。
-- `DifferentiableRendererProtocol`：可微渲染协议，额外约定 `render_torch(patterns, scene)`。
+- `RendererProtocol`：黑盒渲染协议，约定 `render(patterns, scene) -> RenderResult`。
+- `DifferentiableRendererProtocol`：可微渲染协议，约定 `render_torch(patterns, scene)`。
 - `RenderResult`：保存 `captured_images`、`correspondence`、`valid_mask` 等渲染输出。
 - `make_correspondence_map(...)`：生成 camera 到 projector 的几何对应关系和有效 mask。
 - `sample_projector_columns(patterns, columns)`：按对应列采样 projector pattern。
@@ -134,7 +132,6 @@ OpticalSGD/
 - `create_scene(config) -> SceneDescription`：从配置创建完整场景。
 - `SceneDescription`：保存 `depth`、`correspondence`、`valid_mask`、`material_maps` 等场景数据。
 - `make_depth_surface(height, width, profile)`：生成 `flat`、`bump`、`slanted_wave` 等深度面。
-- `make_material_texture(height, width, material)`：生成旧式材质纹理。
 - `make_material_maps(height, width, material) -> MaterialMaps`：生成结构化材质参数。
 - `MaterialMaps`：保存 `albedo`、`specular`、`scattering`、`projector_gamma`、`camera_gamma`。
 
@@ -171,7 +168,7 @@ OpticalSGD/
 实现 OpticalSGD 主优化循环、两种梯度估计方式和 correspondence loss。
 
 对外接口：
-- `OpticalSGDOptimizer`：主优化器，依赖 `RendererProtocol`、`DecoderProtocol` 和 `SceneDescription`，负责更新 patterns，可选联合更新 decoder。
+- `OpticalSGDOptimizer`：主优化器，依赖渲染器协议、`DecoderProtocol` 和 `SceneDescription`，负责更新 patterns，可选联合更新 decoder。
 - `OptimizerState`：保存迭代数、loss、MAE、梯度范数等历史状态。
 - `FiniteDifferenceGradientEstimator`：黑盒有限差分估计 image-Jacobian 或完整 loss 梯度。
 - `AutogradGradientEstimator`：基于 Torch autograd 的梯度估计。
@@ -227,17 +224,17 @@ python OpticalSGD/examples/compare_renderers/run.py
 
 ### 依赖倒置
 
-核心优化器不直接创建或判断具体的渲染器、decoder 类。`examples/` 层根据配置调用 `build_scene()`、`build_renderer()`、`build_decoder()`、`build_initial_patterns()` 和 `build_optimizer()` 组装实验。
+核心优化器不直接创建具体的渲染器、decoder 类。`examples/` 层根据配置调用 `build_scene()`、`build_renderer()`、`build_decoder()`、`build_initial_patterns()` 和 `build_optimizer()` 组装实验。
 
 `OpticalSGDOptimizer` 只依赖抽象接口：
 
-- `RendererProtocol`：提供 `render()`。
-- `DifferentiableRendererProtocol`：在 autograd 路径中提供 `render_torch()`。
+- `RendererProtocol`：黑盒渲染器提供 `render()`。
+- `DifferentiableRendererProtocol`：可微渲染器提供 `render_torch()`。
 - `DecoderProtocol`：提供 `feature_radius` 和 `decode()`。
 - `TrainableDecoderProtocol`：当 decoder 可学习时提供参数向量读写。
 - `TorchFeatureTransformProtocol`：当 decoder 有可微特征变换时提供 torch 特征变换。
 
-因此优化器不需要知道当前使用的是 `TorchRenderer`、`MitsubaRenderer`、`ZNCCDecoder` 还是 `ZNCCNeuralDecoder`。新增 renderer 或 decoder 时，只要实现相应协议并在 `experiments/experiment_setup.py` 注册构建逻辑即可。
+优化器按协议选择渲染路径：实现 `render_torch()` 的可微渲染器走 Torch 张量路径，实现 `render()` 的黑盒渲染器走 NumPy `RenderResult` 路径。新增 renderer 或 decoder 时，实现相应协议并在 `experiments/experiment_setup.py` 注册构建逻辑即可。
 
 ### 渲染器
 
