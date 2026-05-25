@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from optical_sgd.correspondence_decoding.feature_extraction import (
     camera_neighborhood_features,
@@ -61,3 +62,27 @@ def test_decoders_expose_protocol_capabilities_without_class_name_checks():
     assert neural.feature_radius == 1
     assert isinstance(neural, TrainableDecoderProtocol)
     assert isinstance(neural, TorchFeatureTransformProtocol)
+
+
+def test_zncc_neural_decoder_parameters_require_feature_initialization():
+    neural = ZNCCNeuralDecoder(neighborhood=3, seed=1)
+
+    with pytest.raises(RuntimeError, match="Call decode"):
+        neural.parameter_vector()
+
+    patterns = np.array(
+        [
+            [0.0, 0.2, 0.8, 1.0],
+            [1.0, 0.8, 0.2, 0.0],
+        ],
+        dtype=np.float32,
+    )
+    captured_images = patterns[:, None, :]
+    neural.decode(captured_images, patterns)
+    parameters = neural.parameter_vector()
+    neural.set_parameter_vector(parameters)
+
+    different_count_patterns = patterns[:1]
+    different_count_images = different_count_patterns[:, None, :]
+    with pytest.raises(ValueError, match="feature_dim"):
+        neural.decode(different_count_images, different_count_patterns)
