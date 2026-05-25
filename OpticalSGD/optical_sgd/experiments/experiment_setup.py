@@ -10,7 +10,7 @@ from optical_sgd.optimization.optical_sgd_optimizer import OpticalSGDOptimizer
 from optical_sgd.pattern_generation.initial_patterns import create_initial_patterns
 from optical_sgd.rendering.mitsuba_renderer import MitsubaRenderer
 from optical_sgd.rendering.torch_renderer import TorchRenderer
-from optical_sgd.synthetic_scene.scene_factory import create_scene
+from optical_sgd.synthetic_scene import create_scene
 
 
 def build_renderer(config: dict):

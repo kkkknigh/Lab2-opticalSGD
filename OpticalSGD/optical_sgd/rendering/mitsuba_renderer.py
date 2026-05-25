@@ -1,9 +1,6 @@
-"""Official Mitsuba 3 black-box renderer for finite-difference OpticalSGD.
+"""基于 Mitsuba 3 的结构光物理渲染器
 
-This backend intentionally does not expose a PyTorch autograd path.  It uses
-Mitsuba's projector emitter to cast each 1D structured-light pattern as a 2D
-bitmap texture into a small physically rendered scene, then returns the rendered
-camera image to the same decoder/loss pipeline used by the Torch backend.
+该实现不提供 autograd 梯度回传，主要用于生成更接近物理光照效果的观测图像，并搭配有限差分实现优化。
 """
 
 from __future__ import annotations
@@ -13,13 +10,15 @@ from dataclasses import dataclass
 import numpy as np
 
 from optical_sgd.rendering.render_result import RenderResult
-from optical_sgd.synthetic_scene.scene_description import SceneDescription
+from optical_sgd.synthetic_scene import SceneDescription
 
 _ACTIVE_VARIANT: str | None = None
 
 
 @dataclass
 class MitsubaRenderer:
+    """使用 Mitsuba 3 路径追踪模拟结构光成像的黑盒渲染器。"""
+
     noise_std: float = 0.01
     ambient: float = 0.02
     seed: int = 7
@@ -32,10 +31,21 @@ class MitsubaRenderer:
     exposure: float = 1.0
 
     def render(self, patterns: np.ndarray, scene: SceneDescription) -> RenderResult:
+        """渲染投影图案，并返回 NumPy 格式的相机观测结果。
+
+        Args:
+            patterns: 投影仪图案数组，形状为 (pattern_count, projector_width)。
+            scene: 合成场景描述，提供图像尺寸、材质和几何真值。
+
+        Returns:
+            RenderResult: Mitsuba 渲染图像和与场景绑定的真值数据。
+        """
+
         mi = self._load_mitsuba()
         patterns = np.asarray(patterns, dtype=np.float32)
         captured = []
         for shot_index, pattern in enumerate(patterns):
+            # 每个 pattern 单独作为 projector 纹理渲染，seed 偏移保证噪声可复现。
             mitsuba_scene = self._build_scene(mi, pattern, scene)
             image = mi.render(mitsuba_scene, spp=int(self.spp), seed=int(self.seed) + shot_index)
             rgb = np.asarray(image, dtype=np.float32)
@@ -56,6 +66,8 @@ class MitsubaRenderer:
         )
 
     def _load_mitsuba(self):
+        """动态导入 Mitsuba"""
+
         global _ACTIVE_VARIANT
         try:
             import mitsuba as mi
@@ -72,6 +84,8 @@ class MitsubaRenderer:
         return mi
 
     def _choose_variant(self, mi) -> str:
+        """ Mitsuba 设备选择"""
+
         if self.variant != "auto":
             return str(self.variant)
         variants = set(mi.variants())
@@ -82,19 +96,23 @@ class MitsubaRenderer:
         return "scalar_rgb"
 
     def _build_scene(self, mi, pattern: np.ndarray, scene: SceneDescription):
+        """把单个投影图案和合成场景组装成 Mitsuba scene 字典。"""
+
         transform = self._transform(mi)
         return mi.load_dict(
             {
                 "type": "scene",
                 "integrator": {"type": "path", "max_depth": 4},
-                "sensor": self._camera_dict(mi, transform, scene),
+                "sensor": self._camera_dict(transform, scene),
                 "projector": self._projector_dict(mi, transform, pattern),
                 "ground": self._ground_dict(mi, transform, scene),
-                **self._extra_geometry_dict(transform, scene),
+                **self._extra_geometry_dict(scene),
             }
         )
 
-    def _camera_dict(self, mi, transform, scene: SceneDescription) -> dict:
+    def _camera_dict(self, transform, scene: SceneDescription) -> dict:
+        """创建 Mitsuba perspective sensor 配置。"""
+
         return {
             "type": "perspective",
             "fov": float(self.camera_fov),
@@ -114,6 +132,8 @@ class MitsubaRenderer:
         }
 
     def _projector_dict(self, mi, transform, pattern: np.ndarray) -> dict:
+        """创建 Mitsuba projector emitter 配置。"""
+
         return {
             "type": "projector",
             "irradiance": self._pattern_texture(mi, pattern),
@@ -123,13 +143,17 @@ class MitsubaRenderer:
         }
 
     def _ground_dict(self, mi, transform, scene: SceneDescription) -> dict:
+        """创建承接投影的主平面几何体配置。"""
+
         return {
             "type": "rectangle",
             "to_world": self._scale(transform, [1.8, 1.25, 1.0]),
             "bsdf": self._material_bsdf(mi, scene),
         }
 
-    def _extra_geometry_dict(self, transform, scene: SceneDescription) -> dict:
+    def _extra_geometry_dict(self, scene: SceneDescription) -> dict:
+        """根据深度变化添加辅助几何，近似 bump 或起伏场景。"""
+
         if scene.material_name == "frosted_glass":
             bsdf = {
                 "type": "twosided",
@@ -148,6 +172,7 @@ class MitsubaRenderer:
                 "specular_reflectance": self._rgb(0.12),
                 "alpha": 0.25,
             }
+        # 平面深度不添加额外几何；深度变化越大，添加的球体起伏越明显。
         if scene.depth.max() - scene.depth.min() < 0.05:
             return {}
         if scene.depth.max() - scene.depth.min() < 0.25:
@@ -175,6 +200,8 @@ class MitsubaRenderer:
         }
 
     def _material_bsdf(self, mi, scene: SceneDescription) -> dict:
+        """根据场景材质名称生成 Mitsuba BSDF 配置。"""
+
         reflectance = self._albedo_texture(mi, scene.albedo)
         if scene.material_name == "frosted_glass":
             return {
@@ -205,7 +232,10 @@ class MitsubaRenderer:
         }
 
     def _pattern_texture(self, mi, pattern: np.ndarray) -> dict:
+        """把一维投影图案扩展为 Mitsuba projector 使用的 RGB bitmap。"""
+
         pattern = np.clip(np.asarray(pattern, dtype=np.float32), 0.0, 1.0)
+        # projector 需要二维纹理；这里沿高度复制同一条 1D pattern。
         image = np.repeat(pattern[None, :, None], int(self.pattern_texture_height), axis=0)
         image = np.repeat(image, 3, axis=2)
         return {
@@ -218,6 +248,8 @@ class MitsubaRenderer:
 
     @staticmethod
     def _albedo_texture(mi, albedo: np.ndarray) -> dict:
+        """把单通道 albedo 贴图转换为 Mitsuba RGB bitmap texture。"""
+
         image = np.repeat(np.asarray(albedo, dtype=np.float32)[:, :, None], 3, axis=2)
         return {
             "type": "bitmap",
@@ -229,22 +261,24 @@ class MitsubaRenderer:
 
     @staticmethod
     def _transform(mi):
-        if hasattr(mi, "ScalarAffineTransform4f"):
-            return mi.ScalarAffineTransform4f()
-        return mi.ScalarTransform4f()
+        """获取 Mitsuba 标量仿射变换类实例。"""
+
+        return mi.ScalarAffineTransform4f()
 
     @staticmethod
     def _rgb(value: float) -> dict:
+        """构造 Mitsuba RGB 常量纹理配置。"""
+
         return {"type": "rgb", "value": [float(value), float(value), float(value)]}
 
     @staticmethod
     def _look_at(transform, origin, target, up):
-        if hasattr(transform, "look_at"):
-            return transform.look_at(origin=origin, target=target, up=up)
-        return transform.__class__.look_at(origin=origin, target=target, up=up)
+        """生成相机或投影仪的 look_at 变换。"""
+
+        return transform.look_at(origin=origin, target=target, up=up)
 
     @staticmethod
     def _scale(transform, values):
-        if hasattr(transform, "scale"):
-            return transform.scale(values)
-        return transform.__class__.scale(values)
+        """生成几何缩放变换。"""
+
+        return transform.scale(values)
