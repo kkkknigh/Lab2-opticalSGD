@@ -37,6 +37,9 @@ def run_decoder_comparison(config: dict, output_dir: Path) -> dict:
             decoder_cfg["scene"]["material"] = material
             decoder_cfg["decoder"]["type"] = str(variant["type"])
             decoder_cfg["decoder"]["neighborhood"] = int(variant.get("neighborhood", 1))
+            decoder_cfg["optimization"]["joint_optimize_decoder"] = bool(
+                variant.get("joint_optimize_decoder", decoder_cfg["optimization"].get("joint_optimize_decoder", False))
+            )
             metrics = run_pattern_training(decoder_cfg, output_dir / material / decoder_name)
             row = {"material": material, "decoder": decoder_name, **metrics}
             rows.append(row)

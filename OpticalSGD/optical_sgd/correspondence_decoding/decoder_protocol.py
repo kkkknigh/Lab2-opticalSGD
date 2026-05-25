@@ -21,19 +21,19 @@ class DecoderProtocol(Protocol):
 
 
 @runtime_checkable
-class TrainableDecoderProtocol(Protocol):
-    """可学习 decoder 参数读写接口。"""
-
-    def parameter_vector(self) -> np.ndarray:
-        """把 decoder 参数展平成一维向量。"""
-
-    def set_parameter_vector(self, vector: np.ndarray) -> None:
-        """从一维向量恢复 decoder 参数。"""
-
-
-@runtime_checkable
 class TorchFeatureTransformProtocol(Protocol):
     """decoder 的可微 Torch 特征变换接口。"""
 
-    def transform_torch_features(self, image_features, projector_features, device):
+    def transform_torch_features(self, image_features, projector_features, device, trainable_parameters=None):
         """对 Torch 版 image/projector 特征应用 decoder 特定的可微变换。"""
+
+
+@runtime_checkable
+class AutogradTrainableDecoderProtocol(Protocol):
+    """支持 autograd 参数更新的 decoder 接口。"""
+
+    def torch_parameter_tensors(self, feature_dim: int, device):
+        """返回带 requires_grad 的 Torch 参数张量。"""
+
+    def apply_torch_parameter_update(self, named_parameters, learning_rate: float) -> float:
+        """把 Torch 参数梯度更新回 decoder 内部 NumPy 参数，并返回梯度范数。"""

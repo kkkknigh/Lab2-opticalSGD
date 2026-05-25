@@ -34,7 +34,7 @@ optimization:
   iterations: 60
   learning_rate: 0.25
   temperature: 25.0
-  joint_optimize_decoder: true
+  joint_optimize_decoder: false
   decoder_learning_rate: 0.008
 
 decoder_comparison:
@@ -42,10 +42,13 @@ decoder_comparison:
     - name: zncc
       type: zncc
       neighborhood: 1
+      joint_optimize_decoder: false
     - name: zncc_neighborhood
       type: zncc
       neighborhood: 3
+      joint_optimize_decoder: false
     - name: zncc_nn
       type: zncc_nn
       neighborhood: 3
+      joint_optimize_decoder: true
   materials: [diffuse, marble, frosted_glass]

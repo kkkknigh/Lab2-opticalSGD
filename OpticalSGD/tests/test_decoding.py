@@ -15,8 +15,8 @@ from optical_sgd.correspondence_decoding.feature_extraction import (
     projector_neighborhood_features,
 )
 from optical_sgd.correspondence_decoding.decoder_protocol import (
+    AutogradTrainableDecoderProtocol,
     TorchFeatureTransformProtocol,
-    TrainableDecoderProtocol,
 )
 from optical_sgd.correspondence_decoding.zncc_decoder import ZNCCDecoder
 from optical_sgd.correspondence_decoding.zncc_neural_decoder import ZNCCNeuralDecoder
@@ -66,15 +66,15 @@ def test_decoders_expose_protocol_capabilities_without_class_name_checks():
 
     neural = ZNCCNeuralDecoder(neighborhood=3, seed=1)
     assert neural.feature_radius == 1
-    assert isinstance(neural, TrainableDecoderProtocol)
     assert isinstance(neural, TorchFeatureTransformProtocol)
+    assert isinstance(neural, AutogradTrainableDecoderProtocol)
 
 
 def test_zncc_neural_decoder_parameters_require_feature_initialization():
     neural = ZNCCNeuralDecoder(neighborhood=3, seed=1)
 
     with pytest.raises(RuntimeError, match="Call decode"):
-        neural.parameter_vector()
+        neural.parameter_array()
 
     patterns = np.array(
         [
@@ -85,10 +85,31 @@ def test_zncc_neural_decoder_parameters_require_feature_initialization():
     )
     captured_images = patterns[:, None, :]
     neural.decode(captured_images, patterns)
-    parameters = neural.parameter_vector()
-    neural.set_parameter_vector(parameters)
+    parameters = neural.parameter_array()
+    assert parameters.ndim == 1
 
     different_count_patterns = patterns[:1]
     different_count_images = different_count_patterns[:, None, :]
     with pytest.raises(ValueError, match="feature_dim"):
         neural.decode(different_count_images, different_count_patterns)
+
+
+def test_zncc_neural_decoder_torch_parameters_receive_autograd_gradients():
+    torch = pytest.importorskip("torch")
+    neural = ZNCCNeuralDecoder(neighborhood=1, seed=1)
+    patterns = torch.tensor([[0.0, 0.5, 1.0], [1.0, 0.5, 0.0]], dtype=torch.float32)
+    image_features = patterns.T.reshape(1, 3, 2)
+    projector_features = patterns.T
+    parameters = neural.torch_parameter_tensors(feature_dim=2, device="cpu")
+
+    transformed_image, transformed_projector = neural.transform_torch_features(
+        image_features,
+        projector_features,
+        "cpu",
+        parameters,
+    )
+    loss = transformed_image.sum() + transformed_projector.sum()
+    loss.backward()
+
+    assert any(tensor.grad is not None for _, tensor in parameters)
+    assert neural.apply_torch_parameter_update(parameters, learning_rate=0.01) > 0.0

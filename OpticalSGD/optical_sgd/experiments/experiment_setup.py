@@ -113,5 +113,6 @@ def build_optimizer(config: dict, renderer, decoder, scene) -> OpticalSGDOptimiz
         finite_difference_epsilon=float(config["optimization"]["epsilon"]),
         lowpass_fraction=float(config["patterns"]["lowpass_fraction"]),
         temperature=float(config["optimization"]["temperature"]),
+        joint_optimize_decoder=bool(config["optimization"].get("joint_optimize_decoder", False)),
         decoder_learning_rate=float(config["optimization"].get("decoder_learning_rate", 0.02)),
     )

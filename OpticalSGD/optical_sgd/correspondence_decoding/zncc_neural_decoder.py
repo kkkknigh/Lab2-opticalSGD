@@ -120,17 +120,29 @@ class ZNCCNeuralDecoder:
         predicted = np.argmax(scores, axis=-1).astype(np.float32)
         return DecoderOutput(scores=scores.astype(np.float32), predicted_correspondence=predicted)
 
-    def transform_torch_features(self, image_features, projector_features, device):
-        """Torch 版可微特征变换，用于 autograd 优化路径。"""
+    def transform_torch_features(self, image_features, projector_features, device, trainable_parameters=None):
+        """Torch 版可微特征变换，用于 autograd 优化路径。
+
+        Args:
+            image_features: Torch 版 camera 特征。
+            projector_features: Torch 版 projector 特征。
+            device: 参数所在的 Torch 设备。
+            trainable_parameters: 可选的 `(name, tensor)` 参数列表。传入时这些
+                tensor 会保留 `requires_grad`，用于真正更新 decoder 参数。
+        """
 
         import torch
 
         self._ensure_parameters(projector_features.shape[-1])
-        response_curve = torch.as_tensor(self._response_curve, dtype=torch.float32, device=device)
+        parameters = dict(trainable_parameters or [])
+        response_curve = parameters.get(
+            "_response_curve",
+            torch.as_tensor(self._response_curve, dtype=torch.float32, device=device),
+        )
         projector_response = self._torch_piecewise_response(projector_features, response_curve)
 
         def tensor(name: str):
-            return torch.as_tensor(getattr(self, name), dtype=torch.float32, device=device)
+            return parameters.get(name, torch.as_tensor(getattr(self, name), dtype=torch.float32, device=device))
 
         image_residual = self._torch_mlp(
             image_features,
@@ -150,6 +162,66 @@ class ZNCCNeuralDecoder:
             image_features + self.residual_scale * image_residual,
             projector_response + self.residual_scale * projector_residual,
         )
+
+    def torch_parameter_tensors(self, feature_dim: int, device):
+        """创建参与 autograd 的 decoder 参数张量。"""
+
+        import torch
+
+        self._ensure_parameters(feature_dim)
+        names = [
+            "_response_curve",
+            "_camera_w1",
+            "_camera_b1",
+            "_camera_w2",
+            "_camera_b2",
+            "_projector_w1",
+            "_projector_b1",
+            "_projector_w2",
+            "_projector_b2",
+        ]
+        return [
+            (
+                name,
+                torch.tensor(getattr(self, name), dtype=torch.float32, device=device, requires_grad=True),
+            )
+            for name in names
+        ]
+
+    def apply_torch_parameter_update(self, named_parameters, learning_rate: float) -> float:
+        """用 autograd 梯度更新 decoder 参数，并返回参数梯度范数。"""
+
+        squared_norm = 0.0
+        for name, tensor in named_parameters:
+            if tensor.grad is None:
+                continue
+            gradient = tensor.grad.detach()
+            squared_norm += float((gradient * gradient).sum().cpu())
+            updated = tensor.detach() - float(learning_rate) * gradient
+            array = updated.cpu().numpy().astype(np.float32)
+            if name == "_response_curve":
+                array = np.clip(array, 0.0, 1.0)
+            setattr(self, name, array)
+        return float(np.sqrt(squared_norm))
+
+    def parameter_array(self) -> np.ndarray:
+        """返回当前 decoder 参数数组，仅用于测试和结果检查。"""
+
+        if not self._initialized:
+            raise RuntimeError("Call decode() or transform_torch_features() before reading decoder parameters.")
+        return np.concatenate(
+            [
+                self._response_curve.ravel(),
+                self._camera_w1.ravel(),
+                self._camera_b1.ravel(),
+                self._camera_w2.ravel(),
+                self._camera_b2.ravel(),
+                self._projector_w1.ravel(),
+                self._projector_b1.ravel(),
+                self._projector_w2.ravel(),
+                self._projector_b2.ravel(),
+            ]
+        ).astype(np.float32)
 
     @staticmethod
     def _torch_piecewise_response(values, response_curve):
@@ -172,49 +244,3 @@ class ZNCCNeuralDecoder:
 
         hidden = torch.relu(values @ w1 + b1)
         return hidden @ w2 + b2
-
-    def parameter_vector(self) -> np.ndarray:
-        """把响应曲线和 MLP 参数展平成一维向量。"""
-
-        if not self._initialized:
-            raise RuntimeError("Call decode() or transform_torch_features() before reading decoder parameters.")
-        return np.concatenate(
-            [
-                self._response_curve.ravel(),
-                self._camera_w1.ravel(),
-                self._camera_b1.ravel(),
-                self._camera_w2.ravel(),
-                self._camera_b2.ravel(),
-                self._projector_w1.ravel(),
-                self._projector_b1.ravel(),
-                self._projector_w2.ravel(),
-                self._projector_b2.ravel(),
-            ]
-        ).astype(np.float32)
-
-    def set_parameter_vector(self, vector: np.ndarray) -> None:
-        """从一维向量恢复响应曲线和 MLP 参数。"""
-
-        if not self._initialized:
-            raise RuntimeError("Call decode() or transform_torch_features() before setting decoder parameters.")
-        v = np.asarray(vector, dtype=np.float32)
-        offset = 0
-
-        def take(shape):
-            """从参数向量中按 shape 取出一段并恢复形状。"""
-
-            nonlocal offset
-            size = int(np.prod(shape))
-            chunk = v[offset : offset + size].reshape(shape)
-            offset += size
-            return chunk
-
-        self._response_curve = take(self._response_curve.shape)
-        self._camera_w1 = take(self._camera_w1.shape)
-        self._camera_b1 = take(self._camera_b1.shape)
-        self._camera_w2 = take(self._camera_w2.shape)
-        self._camera_b2 = take(self._camera_b2.shape)
-        self._projector_w1 = take(self._projector_w1.shape)
-        self._projector_b1 = take(self._projector_b1.shape)
-        self._projector_w2 = take(self._projector_w2.shape)
-        self._projector_b2 = take(self._projector_b2.shape)

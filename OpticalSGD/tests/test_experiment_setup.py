@@ -45,6 +45,7 @@ def minimal_config() -> dict:
             "gradient_method": "finite_difference",
             "epsilon": 0.01,
             "temperature": 10.0,
+            "joint_optimize_decoder": False,
             "decoder_learning_rate": 0.02,
         },
     }
@@ -108,3 +109,4 @@ def test_build_optimizer_copies_optimization_config():
     assert optimizer.learning_rate == 0.1
     assert optimizer.iterations == 1
     assert optimizer.temperature == 10.0
+    assert optimizer.joint_optimize_decoder is False

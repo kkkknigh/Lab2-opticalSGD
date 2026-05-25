@@ -7,12 +7,12 @@ from dataclasses import dataclass
 import numpy as np
 
 from optical_sgd.correspondence_decoding.decoder_protocol import (
+    AutogradTrainableDecoderProtocol,
     DecoderProtocol,
     TorchFeatureTransformProtocol,
-    TrainableDecoderProtocol,
 )
 from optical_sgd.optimization.correspondence_losses import correspondence_mae, soft_expected_l1_loss
-from optical_sgd.optimization.gradient_estimators import AutogradGradientEstimator, FiniteDifferenceGradientEstimator
+from optical_sgd.optimization.gradient_estimators import FiniteDifferenceGradientEstimator
 from optical_sgd.optimization.optimizer_state import OptimizerState
 from optical_sgd.pattern_generation.frequency_constraints import apply_frequency_constraint, clamp_patterns
 from optical_sgd.rendering.render_result import RenderResult
@@ -33,14 +33,8 @@ class OpticalSGDOptimizer:
     finite_difference_epsilon: float = 0.03
     lowpass_fraction: float = 0.5
     temperature: float = 25.0
+    joint_optimize_decoder: bool = False
     decoder_learning_rate: float = 0.02
-
-    def _estimator(self):
-        """根据配置选择 autograd 或有限差分梯度估计器。"""
-
-        if self.gradient_method == "autograd":
-            return AutogradGradientEstimator(self.finite_difference_epsilon)
-        return FiniteDifferenceGradientEstimator(self.finite_difference_epsilon)
 
     def evaluate(self, patterns: np.ndarray) -> dict[str, float | np.ndarray]:
         """渲染并解码当前 pattern，返回 loss、MAE 和可视化所需结果。"""
@@ -70,26 +64,26 @@ class OpticalSGDOptimizer:
 
         patterns = apply_frequency_constraint(initial_patterns, self.lowpass_fraction)
         state = OptimizerState()
-        estimator = self._estimator()
 
         for _ in range(int(self.iterations)):
             def loss_function(candidate: np.ndarray) -> float:
                 constrained = apply_frequency_constraint(clamp_patterns(candidate), self.lowpass_fraction)
                 return float(self.evaluate(constrained)["loss"])
 
-            decoder_gradient = self._decoder_parameter_gradient(patterns)
             if self.gradient_method == "autograd":
-                gradient = estimator.estimate(patterns, loss_function, self._torch_soft_zncc_loss)
+                gradient, decoder_gradient_norm = self._autograd_gradient_step(patterns)
             else:
                 gradient = self._optical_finite_difference_gradient(patterns, loss_function)
+                decoder_gradient_norm = 0.0
+                if self.joint_optimize_decoder and isinstance(self.decoder, AutogradTrainableDecoderProtocol):
+                    decoder_gradient_norm = self._autograd_decoder_update(patterns)
             patterns = patterns - float(self.learning_rate) * gradient
-            self._apply_decoder_update(decoder_gradient)
             patterns = apply_frequency_constraint(clamp_patterns(patterns), self.lowpass_fraction)
             metrics = self.evaluate(patterns)
             state.losses.append(float(metrics["loss"]))
             state.maes.append(float(metrics["mae"]))
             state.gradient_norms.append(float(np.linalg.norm(gradient)))
-            state.decoder_gradient_norms.append(float(np.linalg.norm(decoder_gradient)) if decoder_gradient.size else 0.0)
+            state.decoder_gradient_norms.append(decoder_gradient_norm)
         return patterns.astype(np.float32), state
 
     def _optical_finite_difference_gradient(self, patterns: np.ndarray, fallback_loss_function) -> np.ndarray:
@@ -103,7 +97,10 @@ class OpticalSGDOptimizer:
             base_result = self._render_numpy(patterns)
             image_loss_gradient = self._captured_loss_gradient(patterns, base_result.captured_images)
         except Exception:
-            return self._estimator().estimate(patterns, fallback_loss_function)
+            return FiniteDifferenceGradientEstimator(self.finite_difference_epsilon).estimate(
+                patterns,
+                fallback_loss_function,
+            )
 
         gradient = np.zeros_like(patterns, dtype=np.float32)
         epsilon = float(self.finite_difference_epsilon)
@@ -143,33 +140,31 @@ class OpticalSGDOptimizer:
             return self.renderer.render(patterns, self.scene)
         raise TypeError("Renderer must provide render_torch() or render().")
 
-    def _decoder_parameter_gradient(self, patterns: np.ndarray) -> np.ndarray:
-        """如果 decoder 可学习，则用有限差分估计 decoder 参数梯度。"""
+    def _autograd_decoder_update(self, patterns: np.ndarray) -> float:
+        """固定已渲染图像，对 decoder 参数本身做 autograd 更新。"""
 
-        if not isinstance(self.decoder, TrainableDecoderProtocol):
-            return np.zeros(0, dtype=np.float32)
-        self.evaluate(patterns)
-        base_parameters = self.decoder.parameter_vector()
-        epsilon = max(float(self.finite_difference_epsilon) * 0.25, 1e-3)
+        import torch
 
-        def parameter_loss(candidate: np.ndarray) -> float:
-            self.decoder.set_parameter_vector(candidate)
-            return float(self.evaluate(patterns)["loss"])
+        result = self._render_numpy(patterns)
+        device = self._torch_device(torch)
+        pattern_tensor = torch.tensor(patterns, dtype=torch.float32, device=device)
+        captured = torch.tensor(result.captured_images, dtype=torch.float32, device=device)
+        ground_truth = torch.as_tensor(result.ground_truth_correspondence, dtype=torch.float32, device=device)
+        valid_mask = torch.as_tensor(result.valid_mask, dtype=torch.bool, device=device)
+        radius = self.decoder.feature_radius
+        feature_dim = int(patterns.shape[0]) * (2 * int(radius) + 1)
+        decoder_parameters = self.decoder.torch_parameter_tensors(feature_dim, device)
 
-        gradient = FiniteDifferenceGradientEstimator(epsilon=epsilon).estimate(base_parameters, parameter_loss)
-        self.decoder.set_parameter_vector(base_parameters)
-        return gradient
-
-    def _apply_decoder_update(self, gradient: np.ndarray) -> None:
-        """按 decoder_learning_rate 更新可学习 decoder 参数。"""
-
-        if gradient.size == 0:
-            return
-        if not isinstance(self.decoder, TrainableDecoderProtocol):
-            return
-        parameters = self.decoder.parameter_vector()
-        updated = parameters - float(self.decoder_learning_rate) * gradient
-        self.decoder.set_parameter_vector(updated)
+        scores = self._torch_decoder_scores(captured, pattern_tensor, decoder_parameters)
+        weights = torch.softmax(scores * float(self.temperature), dim=-1)
+        columns = torch.arange(pattern_tensor.shape[1], dtype=torch.float32, device=device)
+        penalty = torch.abs(columns.view(1, 1, -1) - ground_truth.unsqueeze(-1))
+        loss = (weights * penalty).sum(dim=-1)[valid_mask].mean()
+        loss.backward()
+        return self.decoder.apply_torch_parameter_update(
+            decoder_parameters,
+            float(self.decoder_learning_rate),
+        )
 
     def _loss_with_captured(self, captured_images: np.ndarray, patterns: np.ndarray, render_result) -> float:
         """固定相机图像，只改变 projector codebook 时重新计算 loss。"""
@@ -182,7 +177,42 @@ class OpticalSGDOptimizer:
             self.temperature,
         )
 
-    def _torch_soft_zncc_loss(self, pattern_tensor):
+    def _autograd_gradient_step(self, patterns: np.ndarray) -> tuple[np.ndarray, float]:
+        """用同一张 Torch 计算图反传 pattern 梯度，并可选更新 decoder 参数。"""
+
+        import torch
+
+        if not isinstance(self.renderer, DifferentiableRendererProtocol):
+            raise RuntimeError("Autograd gradient requires a renderer with render_torch().")
+
+        pattern_tensor = torch.tensor(patterns, dtype=torch.float32, requires_grad=True)
+        device = self._torch_device(torch)
+        decoder_parameters = self._autograd_decoder_parameters(pattern_count=patterns.shape[0], device=device)
+        loss = self._torch_soft_zncc_loss(pattern_tensor, decoder_parameters)
+        loss.backward()
+        if pattern_tensor.grad is None:
+            raise RuntimeError("Autograd did not produce a pattern gradient.")
+        gradient = pattern_tensor.grad.detach().cpu().numpy().astype(np.float32)
+        decoder_gradient_norm = 0.0
+        if decoder_parameters:
+            decoder_gradient_norm = self.decoder.apply_torch_parameter_update(
+                decoder_parameters,
+                float(self.decoder_learning_rate),
+            )
+        return gradient, decoder_gradient_norm
+
+    def _autograd_decoder_parameters(self, pattern_count: int, device):
+        """为支持 autograd 的 decoder 创建本轮可训练参数张量。"""
+
+        if not self.joint_optimize_decoder:
+            return None
+        if not isinstance(self.decoder, AutogradTrainableDecoderProtocol):
+            return None
+        radius = self.decoder.feature_radius
+        feature_dim = int(pattern_count) * (2 * int(radius) + 1)
+        return self.decoder.torch_parameter_tensors(feature_dim, device)
+
+    def _torch_soft_zncc_loss(self, pattern_tensor, decoder_parameters=None):
         """可微渲染 + Torch 版 ZNCC soft correspondence loss。"""
 
         import torch
@@ -195,7 +225,7 @@ class OpticalSGDOptimizer:
         ground_truth = render_result["ground_truth_correspondence"]
         valid_mask = render_result["valid_mask"]
 
-        scores = self._torch_decoder_scores(captured, patterns)
+        scores = self._torch_decoder_scores(captured, patterns, decoder_parameters)
         weights = torch.softmax(scores * float(self.temperature), dim=-1)
         columns = torch.arange(patterns.shape[1], dtype=torch.float32, device=patterns.device)
         penalty = torch.abs(columns.view(1, 1, -1) - ground_truth.unsqueeze(-1))
@@ -228,7 +258,7 @@ class OpticalSGDOptimizer:
             raise RuntimeError("Captured-image loss gradient was not produced.")
         return captured.grad.detach().cpu().numpy().astype(np.float32)
 
-    def _torch_decoder_scores(self, captured, patterns):
+    def _torch_decoder_scores(self, captured, patterns, decoder_parameters=None):
         """用 Torch 张量实现 decoder 的 ZNCC 打分过程。"""
 
         radius = self.decoder.feature_radius
@@ -239,6 +269,7 @@ class OpticalSGDOptimizer:
                 image_features,
                 projector_features,
                 patterns.device,
+                decoder_parameters,
             )
         image_features = self._torch_normalize(image_features)
         projector_features = self._torch_normalize(projector_features)
